@@ -1,0 +1,199 @@
+<div class="admin-users-container">
+  <div class="header">
+    <h1>User Management</h1>
+    <div class="search-box">
+      <i class='bx bx-search'></i>
+      <input 
+        type="text" 
+        placeholder="Search by username, email or name..." 
+        [(ngModel)]="searchTerm"
+        (input)="filterUsers()"
+      >
+    </div>
+  </div>
+
+  <div *ngIf="successMessage" class="success-message">
+    <span class="icon">✓</span> {{ successMessage }}
+  </div>
+  <div *ngIf="error" class="error-message">
+    <span class="icon">⚠️</span> {{ error }}
+  </div>
+
+  <div *ngIf="loading" class="loading-state">
+    <div class="spinner"></div>
+    <p>Loading users...</p>
+  </div>
+
+  <div *ngIf="!loading" class="users-table-wrapper">
+    <table class="users-table">
+      <thead>
+        <tr>
+          <th>User</th>
+          <th>Role</th>
+          <th>Status</th>
+          <th>Created</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let user of filteredUsers">
+          <td class="user-info">
+            <div class="avatar">
+              {{ (user.full_name || user.username).charAt(0).toUpperCase() }}
+            </div>
+            <div class="user-details">
+              <div class="user-name">{{ user.full_name || user.username }}</div>
+              <div class="user-username">@{{ user.username }}</div>
+              <div class="user-email">{{ user.email }}</div>
+            </div>
+          </td>
+          <td>
+            <span class="role-badge" [ngClass]="getRoleBadgeClass(user.role)">
+              {{ user.role | uppercase }}
+            </span>
+            <div class="role-desc">{{ getRoleDescription(user.role) }}</div>
+          </td>
+          <td>
+            <span class="status-badge" [class.active]="user.is_active">
+              {{ user.is_active ? 'Active' : 'Inactive' }}
+            </span>
+            <div *ngIf="!user.is_active" class="inactive-info">
+              Inactive for {{ user.inactive_days }} days
+            </div>
+          </td>
+          <td class="date-cell">
+            {{ formatDate(user.created_at) }}
+          </td>
+          <td class="actions-cell">
+            <button class="btn-icon edit" (click)="editUser(user)" title="Edit User">
+              <i class='bx bx-edit'></i>
+            </button>
+            <button 
+              class="btn-icon status" 
+              [class.active]="user.is_active"
+              (click)="confirmActivate(user)" 
+              [title]="user.is_active ? 'Deactivate User' : 'Activate User'"
+              [attr.aria-label]="user.is_active ? 'Deactivate user' : 'Activate user'"
+            >
+              <i class='bx' [ngClass]="user.is_active ? 'bx-lock-open' : 'bx-lock'"></i>
+            </button>
+            <button class="btn-icon delete" (click)="confirmDelete(user)" title="Delete User">
+              <i class='bx bx-trash'></i>
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div *ngIf="filteredUsers.length === 0" class="empty-state">
+      <i class='bx bx-group'></i>
+      <p>No users found</p>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" *ngIf="showEditModal" (click)="closeModal()">
+  <div class="modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Edit User</h2>
+      <button class="close-btn" (click)="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="user-avatar" *ngIf="selectedUser">
+        <div class="avatar-large">
+          {{ (selectedUser.full_name || selectedUser.username || 'U').charAt(0).toUpperCase() }}
+        </div>
+        <div class="user-name-display">
+          <strong>{{ selectedUser.full_name || selectedUser.username }}</strong>
+          <span class="username">@{{ selectedUser.username }}</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Full Name</label>
+        <input type="text" name="fullName" [(ngModel)]="editForm.full_name" placeholder="Full name">
+      </div>
+
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" name="email" [(ngModel)]="editForm.email" placeholder="Email address">
+      </div>
+
+      <div class="form-group">
+        <label>Role</label>
+        <select name="role" [(ngModel)]="editForm.role" aria-label="Select user role">
+          <option *ngFor="let role of roleOptions" [value]="role.value">
+            {{ role.label }} - {{ role.description }}
+          </option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Status</label>
+        <div class="status-toggle">
+          <label class="toggle-switch">
+            <input type="checkbox" [(ngModel)]="editForm.is_active" aria-labelledby="status-label">
+            <span class="toggle-slider"></span>
+          </label>
+          <span class="status-label">{{ editForm.is_active ? 'Active' : 'Inactive' }}</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Manager ID (optional)</label>
+        <input type="number" name="managerId" [(ngModel)]="editForm.manager_id" placeholder="Manager's user ID">
+        <small>Enter the ID of the user who should manage this user</small>
+      </div>
+
+      <div class="form-actions">
+        <button class="btn-cancel" (click)="closeModal()">Cancel</button>
+        <button class="btn-save" (click)="saveUser()" [disabled]="updateLoading">
+          {{ updateLoading ? 'Saving...' : 'Save Changes' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" *ngIf="showActivateConfirm && selectedUser" (click)="closeModal()">
+  <div class="modal small" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>{{ selectedUser.is_active ? 'Deactivate' : 'Activate' }} User</h2>
+    </div>
+    <div class="modal-body">
+      <p>
+        Are you sure you want to 
+        <strong>{{ selectedUser.is_active ? 'deactivate' : 'activate' }}</strong> 
+        user <strong>{{ selectedUser.full_name || selectedUser.username }}</strong>?
+      </p>
+      <p *ngIf="selectedUser.is_active" class="warning-text">
+        Deactivated users will not be able to log in or access the system.
+      </p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" (click)="closeModal()">Cancel</button>
+      <button class="btn-confirm" [class.danger]="selectedUser.is_active" (click)="toggleUserStatus()">
+        {{ selectedUser.is_active ? 'Deactivate' : 'Activate' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" *ngIf="showDeleteConfirm && selectedUser" (click)="closeModal()">
+  <div class="modal small" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Delete User</h2>
+    </div>
+    <div class="modal-body">
+      <p class="warning-text">
+        Are you sure you want to permanently delete 
+        <strong>{{ selectedUser.full_name || selectedUser.username }}</strong>?
+      </p>
+      <p>This action cannot be undone. All associated batches and documents will also be deleted.</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" (click)="closeModal()">Cancel</button>
+      <button class="btn-confirm danger" (click)="deleteUser()">Delete Permanently</button>
+    </div>
+  </div>
+</div>

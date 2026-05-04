@@ -1,0 +1,24 @@
+<div *ngIf="loading" class="welcome-container">
+  <div class="welcome-card">
+    <div class="spinner"></div>
+    <p>Loading...</p>
+  </div>
+</div>
+
+<div *ngIf="!loading" class="welcome-container">
+  <div class="welcome-card">
+    <div class="welcome-icon">👋</div>
+    <h1>Welcome back, {{ username }}!</h1>
+    <p class="welcome-message">Your account has been successfully authenticated.</p>
+    <p class="instruction">Select an option from the sidebar to get started.</p>
+    <div class="quick-links">
+      <p class="hint">📋 Quick access:</p>
+      <ul>
+        <li *ngIf="isProfileAdmin">👥 Go to <strong>Profile Management</strong> to manage users</li>
+        <li *ngIf="isProfileAdmin">📄 Go to <strong>Document Management</strong> to view documents</li>
+        <li *ngIf="isSystemAdmin">🖥️ Go to <strong>System Admin</strong> to monitor system health</li>
+        <li *ngIf="isRegularUser">📊 Go to <strong>Dashboard</strong> to see your statistics</li>
+      </ul>
+    </div>
+  </div>
+</div>

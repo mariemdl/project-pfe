@@ -1,0 +1,206 @@
+<div class="register-container">
+  <div class="register-card">
+    <div class="scrollable-content" style="max-height: 70vh; overflow-y: auto; padding-right: 10px;">
+      
+      <div class="register-header">
+        <h1>👥 Create New User Profile</h1>
+        <p>Fill in the user details and assign permissions</p>
+      </div>
+      
+      <!-- Success Message -->
+      <div class="success-message" *ngIf="successMessage">
+        {{ successMessage }}
+        <button class="close-btn" (click)="successMessage = ''">×</button>
+      </div>
+      
+      <form (ngSubmit)="onSubmit()" #registerForm="ngForm">
+        <!-- User Information Section -->
+        <div class="section-title">📋 User Information</div>
+        
+        <div class="form-group">
+          <label for="fullName">Full Name</label>
+          <input type="text" id="fullName" name="fullName" [(ngModel)]="fullName" required placeholder="Enter user's full name" class="form-control">
+        </div>
+        
+        <div class="form-group">
+          <label for="username">Username *</label>
+          <input type="text" id="username" name="username" [(ngModel)]="username" required placeholder="Choose a username" class="form-control">
+        </div>
+        
+        <div class="form-group">
+          <label for="email">Email *</label>
+          <input type="email" id="email" name="email" [(ngModel)]="email" required placeholder="user@company.com" class="form-control">
+          <small class="hint">Credentials will be sent to this email</small>
+        </div>
+        
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input type="password" id="password" name="password" [(ngModel)]="password" placeholder="Leave empty to auto-generate" class="form-control">
+          <small class="hint">Leave empty to generate a random secure password</small>
+        </div>
+        
+        <div class="form-group" *ngIf="password">
+          <label for="confirmPassword">Confirm Password</label>
+          <input type="password" id="confirmPassword" name="confirmPassword" [(ngModel)]="confirmPassword" placeholder="Confirm password" class="form-control">
+        </div>
+        
+        <!-- Permissions Section -->
+        <div class="section-title">🔐 Permissions</div>
+        
+        <div class="permissions-group">
+          <label class="checkbox-label">
+            <input type="checkbox" [(ngModel)]="permissions.idcard" (change)="onPermissionChange()" name="permIdcard">
+            <span class="checkbox-text">
+              <strong>🪪 ID Card Data Extraction</strong>
+              <small>Extract information from ID cards</small>
+            </span>
+          </label>
+          
+          <label class="checkbox-label">
+            <input type="checkbox" [(ngModel)]="permissions.invoice" (change)="onPermissionChange()" name="permInvoice">
+            <span class="checkbox-text">
+              <strong>📄 Invoice Data Extraction</strong>
+              <small>Extract information from invoices</small>
+            </span>
+          </label>
+          
+          <label class="checkbox-label">
+            <input type="checkbox" [(ngModel)]="permissions.contract" (change)="onPermissionChange()" name="permContract">
+            <span class="checkbox-text">
+              <strong>📑 Contract Data Extraction</strong>
+              <small>Extract information from contracts</small>
+            </span>
+          </label>
+          
+          <label class="checkbox-label">
+            <input type="checkbox" [(ngModel)]="permissions.passport" (change)="onPermissionChange()" name="permPassport">
+            <span class="checkbox-text">
+              <strong>🛂 Passport Data Extraction</strong>
+              <small>Extract information from passports</small>
+            </span>
+          </label>
+          
+          <label class="checkbox-label">
+            <input type="checkbox" [(ngModel)]="permissions.view_subordinates" (change)="onPermissionChange()" name="permSubordinates">
+            <span class="checkbox-text">
+              <strong>👥 View Subordinates</strong>
+              <small>View subordinates and manage their documents (CRUD)</small>
+            </span>
+          </label>
+        </div>
+        
+        <!-- Role Summary -->
+        <div class="role-summary" *ngIf="getSelectedPermissionIds().length > 0">
+          <div class="role-badge" [class.manager]="permissions.view_subordinates">
+            <span *ngIf="!permissions.view_subordinates">👤 Normal User</span>
+            <span *ngIf="permissions.view_subordinates">👔 Manager</span>
+          </div>
+          <div class="role-desc">
+            <span *ngIf="!permissions.view_subordinates">
+              Has access to: {{ getPermissionNames() }}
+            </span>
+            <span *ngIf="permissions.view_subordinates">
+              Manager with access to: {{ getPermissionNames() }}
+            </span>
+          </div>
+        </div>
+        
+        <!-- Manager Selection (appears when view_subordinates is checked) -->
+        <div class="manager-section" *ngIf="showManagerSelection">
+          <div class="section-title">👔 Assign to Manager</div>
+          <div class="form-group">
+            <label>Select Manager (Optional)</label>
+            <select [(ngModel)]="selectedManagerId" name="managerId" aria-label="select manager id">
+              <option [value]="null">No manager (Top-level manager)</option>
+              <option *ngFor="let manager of availableManagers" [value]="manager.id">
+                {{ manager.full_name || manager.username }} ({{ manager.email }})
+              </option>
+            </select>
+            <small class="hint">If assigned, this user will report to the selected manager</small>
+          </div>
+        </div>
+        
+        <!-- Error Message -->
+        <div class="error-message" *ngIf="error">
+          {{ error }}
+        </div>
+        
+        <!-- Action Buttons -->
+        <div class="button-group">
+          <button type="button" class="btn-secondary" (click)="goToUsersList()">
+            Cancel
+          </button>
+          <button type="submit" class="btn-register" [disabled]="loading || isSubmitting">
+            <span *ngIf="!loading && !isSubmitting">✨ Create User & Send Email</span>
+            <span *ngIf="loading || isSubmitting">⏳ Creating user...</span>
+          </button>
+        </div>
+      </form>
+      
+    </div>
+  </div>
+
+  <!-- Subordinate Selection Popup (for Managers) -->
+<div class="modal-overlay" *ngIf="showSubordinatePopup" (click)="closeSubordinatePopup()">
+  <div class="modal-container" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>👥 Select Subordinates for {{ username || 'this manager' }}</h3>
+      <button class="modal-close" (click)="closeSubordinatePopup()">&times;</button>
+    </div>
+    
+    <div class="modal-body">
+      <p class="modal-info">
+        Select which users will report to this manager. They will be able to view and manage these subordinates' documents.
+      </p>
+      
+      <!-- Search Bar -->
+      <div class="search-section">
+        <input 
+          type="text" 
+          class="search-input"
+          placeholder="🔍 Search by name, username or email..."
+          [(ngModel)]="subordinateSearchTerm"
+          (input)="filterSubordinates()"
+        />
+      </div>
+      
+      <!-- Selected Count -->
+      <div class="selected-count" *ngIf="selectedSubordinates.length > 0">
+        ✅ {{ selectedSubordinates.length }} user(s) selected
+      </div>
+      
+      <!-- Users List -->
+      <div class="users-list">
+        <div class="user-item" *ngFor="let user of filteredActiveUsers">
+          <label class="user-checkbox">
+            <input 
+              type="checkbox" 
+              [checked]="isSubordinateSelected(user.id)"
+              (change)="toggleSubordinate(user.id)"
+            />
+            <div class="user-info">
+              <span class="user-name">{{ user.full_name || user.username }}</span>
+              <span class="user-email">{{ user.email }}</span>
+              <span class="user-username">@{{ user.username }}</span>
+            </div>
+          </label>
+        </div>
+        
+        <div class="no-results" *ngIf="filteredActiveUsers.length === 0">
+          <div class="no-results-content">
+            <span class="no-results-icon">👥</span>
+            <p>No users found matching "{{ subordinateSearchTerm }}"</p>
+            <small>Only active users can be selected as subordinates</small>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="closeSubordinatePopup()">Cancel</button>
+      <button class="btn-primary" (click)="createUser()" [disabled]="loading">
+        Validate & Create User
+      </button>
+    </div>
+  </div>
+</div>

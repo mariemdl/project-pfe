@@ -1,0 +1,5 @@
+<app-sidebar *ngIf="showSidebar"></app-sidebar>
+<div class="main-content" [class.sidebar-hidden]="!showSidebar">
+  <router-outlet></router-outlet>
+</div>
+<app-back-button *ngIf="showBackButton$ | async"></app-back-button>

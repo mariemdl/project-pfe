@@ -1,0 +1,8 @@
+/* This CSS is only for preview in browser */
+/* Actual emails use inline styles for compatibility */
+
+:host {
+  display: block;
+  background: #f5f5f5;
+  padding: 20px;
+}

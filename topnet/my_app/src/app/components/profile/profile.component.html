@@ -1,0 +1,205 @@
+<div class="profile-container">
+  <div *ngIf="isAdminViewingOther" class="back-button">
+    <button class="btn-back" (click)="goBack()">
+      ← Back to Users
+    </button>
+  </div>
+  
+  <div class="profile-card">
+    <!-- Header -->
+    <div class="profile-header">
+      <div class="avatar">
+        {{ (user?.full_name || user?.username || 'U').charAt(0).toUpperCase() }}
+      </div>
+      <h1>My Profile</h1>
+      <p class="role-badge" [ngClass]="getRoleBadgeClass(user?.role || 'viewer')">
+        {{ user?.role | uppercase }}
+      </p>
+    </div>
+
+    <!-- Loading State -->
+    <div *ngIf="loading" class="loading-state">
+      <div class="spinner"></div>
+      <p>Loading profile...</p>
+    </div>
+
+    <!-- Error Message -->
+    <div *ngIf="error && !loading" class="error-message">
+      {{ error }}
+    </div>
+
+    <!-- Success Message -->
+    <div *ngIf="successMessage" class="success-message">
+      <span class="success-icon">✓</span>
+      {{ successMessage }}
+    </div>
+
+    <!-- Profile Content -->
+    <div *ngIf="!loading && user" class="profile-content">
+      <!-- View Mode -->
+      <div *ngIf="!isEditing" class="view-mode">
+        <div class="info-section">
+          <div class="info-row">
+            <div class="info-label">
+              <span class="label-icon">👤</span>
+              <span>Username</span>
+            </div>
+            <div class="info-value">{{ user.username }}</div>
+          </div>
+
+          <div class="info-row">
+            <div class="info-label">
+              <span class="label-icon">📧</span>
+              <span>Email</span>
+            </div>
+            <div class="info-value">{{ user.email }}</div>
+          </div>
+
+          <div class="info-row">
+            <div class="info-label">
+              <span class="label-icon">✏️</span>
+              <span>Full Name</span>
+            </div>
+            <div class="info-value">{{ user.full_name || 'Not set' }}</div>
+          </div>
+
+          <div class="info-row">
+            <div class="info-label">
+              <span class="label-icon">🆔</span>
+              <span>User ID</span>
+            </div>
+            <div class="info-value">{{ user.id }}</div>
+          </div>
+
+          <div class="info-row">
+            <div class="info-label">
+              <span class="label-icon">📅</span>
+              <span>Member Since</span>
+            </div>
+            <div class="info-value">{{ formatDate(user.created_at) }}</div>
+          </div>
+
+          <div class="info-row">
+            <div class="info-label">
+              <span class="label-icon">🔒</span>
+              <span>Status</span>
+            </div>
+            <div class="info-value">
+              <span class="status-badge" [class.active]="user.is_active">
+                {{ user.is_active ? 'Active' : 'Inactive' }}
+              </span>
+            </div>
+          </div>
+
+          <div *ngIf="user.manager_id" class="info-row">
+            <div class="info-label">
+              <span class="label-icon">👔</span>
+              <span>Manager ID</span>
+            </div>
+            <div class="info-value">{{ user.manager_id }}</div>
+          </div>
+        </div>
+
+        <div class="action-buttons">
+          <button class="btn-edit" (click)="toggleEdit()">
+            <span class="btn-icon">✏️</span>
+            Change Info
+          </button>
+        </div>
+      </div>
+
+      <!-- Edit Mode -->
+      <div *ngIf="isEditing" class="edit-mode">
+        <form (ngSubmit)="updateProfile()" #profileForm="ngForm">
+          <div class="form-group">
+            <label for="full_name">Full Name</label>
+            <input 
+              type="text" 
+              id="full_name" 
+              name="full_name"
+              [(ngModel)]="editForm.full_name"
+              placeholder="Enter your full name"
+              class="form-control">
+          </div>
+
+          <div class="form-group">
+            <label for="email">Email Address</label>
+            <input 
+              type="email" 
+              id="email" 
+              name="email"
+              [(ngModel)]="editForm.email"
+              required
+              email
+              placeholder="Enter your email"
+              class="form-control">
+            <small class="form-hint">This will be used for login and notifications</small>
+          </div>
+
+          <div class="form-group note">
+            <p class="note-text">
+              <span class="note-icon">ℹ️</span>
+              Note: You cannot change your username or role. Contact an administrator if you need these changed.
+            </p>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" class="btn-cancel" (click)="toggleEdit()" [disabled]="updateLoading">
+              Cancel
+            </button>
+            <button type="submit" class="btn-update" [disabled]="updateLoading || !profileForm.valid">
+              <span *ngIf="!updateLoading">Update Profile</span>
+              <span *ngIf="updateLoading">Updating...</span>
+            </button>
+          </div>
+        </form>
+      </div>
+
+
+      <!-- Change Password Section -->
+      <div class="password-section">
+        <div class="password-header" (click)="togglePasswordForm()">
+          <span class="password-icon">🔒</span>
+          <span class="password-title">Change Password</span>
+          <span class="toggle-icon">{{ showPasswordForm ? '▲' : '▼' }}</span>
+        </div>
+
+        <div *ngIf="showPasswordForm" class="password-form">
+
+          <div class="form-group">
+            <label for="old_password">Current Password</label>
+            <input type="password" id="old_password" name="old_password" [(ngModel)]="passwordForm.old_password" placeholder="Enter your current password" class="form-control" [disabled]="passwordLoading">
+          </div>
+
+          <div class="form-group">
+            <label for="new_password">New Password</label>
+            <input type="password" id="new_password" name="new_password" [(ngModel)]="passwordForm.new_password" placeholder="Enter new password (min. 6 characters)" class="form-control" [disabled]="passwordLoading">
+          </div>
+
+          <div class="form-group">
+            <label for="confirm_password">Confirm New Password</label>
+            <input type="password" id="confirm_password" name="confirm_password" [(ngModel)]="passwordForm.confirm_password" placeholder="Confirm your new password" class="form-control" [disabled]="passwordLoading">
+          </div>
+
+          <div *ngIf="passwordError" class="password-error">
+            {{ passwordError }}
+          </div>
+          
+          <div *ngIf="passwordSuccess" class="password-success">
+            {{ passwordSuccess }}
+          </div>
+
+          <div class="password-actions">
+            <button type="button" class="btn-cancel" (click)="togglePasswordForm()" [disabled]="passwordLoading">
+              Cancel
+            </button>
+            <button type="button" class="btn-update-password" (click)="changePassword()" [disabled]="passwordLoading">
+              <span *ngIf="!passwordLoading">Update Password</span>
+              <span *ngIf="passwordLoading">Updating...</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

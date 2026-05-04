@@ -1,0 +1,88 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15
+    container_name: topnet-db
+    environment:
+      POSTGRES_USER: ${DB_USER:-topnet}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-topnet123}
+      POSTGRES_DB: ${DB_NAME:-topnet_db}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - topnet-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-topnet}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./backend
+    container_name: topnet-backend
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql://${DB_USER:-topnet}:${DB_PASSWORD:-topnet123}@db:5432/${DB_NAME:-topnet_db}
+      AI_SERVICE_URL: http://ai-service:8001
+    volumes:
+      - ./backend:/app
+      - uploads:/app/storage/uploads
+      - reports:/app/storage/reports
+      - ./mock-responses:/app/mock-responses
+    networks:
+      - topnet-network
+    depends_on:
+      db:
+        condition: service_healthy
+      ai-service:
+        condition: service_started
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+  selenium:
+    image: selenium/standalone-chrome:latest
+    container_name: topnet-selenium
+    ports:
+      - "4444:4444"  # Selenium WebDriver port
+      - "7900:7900"  # VNC server for debugging (optional)
+    networks:
+      - topnet-network
+    shm_size: 2gb
+    restart: unless-stopped
+  
+  ai-service:
+    build: ./ai-service
+    container_name: topnet-ai-service
+    env_file:
+      - .env
+    volumes:
+      - ./ai-service:/app
+      - ./mock-responses:/app/mock-responses
+    networks:
+      - topnet-network
+    restart: unless-stopped
+    ports:
+      - "8001:8001"
+
+  frontend:
+    build: ./my_app
+    container_name: topnet-frontend
+    networks:
+      - topnet-network
+    depends_on:
+      - backend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+
+
+networks:
+  topnet-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  uploads:
+  reports:

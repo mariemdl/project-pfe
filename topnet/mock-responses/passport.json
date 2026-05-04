@@ -1,0 +1,15 @@
+{
+  "validation": {
+    "is_type": true,
+    "confidence": 0.97
+  },
+  "extraction": {
+    "fields": [
+      {"name": "passport_number", "value": "AB123456", "confidence": 0.99},
+      {"name": "surname", "value": "DUPONT", "confidence": 0.98},
+      {"name": "given_names", "value": "Jean Pierre", "confidence": 0.98},
+      {"name": "nationality", "value": "FRANÇAISE", "confidence": 0.99}
+    ],
+    "language": "fr"
+  }
+}

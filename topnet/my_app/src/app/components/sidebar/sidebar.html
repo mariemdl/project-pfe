@@ -1,0 +1,78 @@
+<nav class="sidebar" [class.close]="isSidebarClosed">
+    <header>
+        <div class="image-text">
+            <span class="image">
+                <img src="../assets/images/logo.png" alt="TOPNET Logo" class="logo-image">
+            </span>
+            
+            <div class="text header-text">
+                <span class="name">TOPNET</span>
+                <span class="profession">Data Extraction</span>
+            </div>
+        </div>
+        
+        <i class='bx bx-chevron-right toggle' (click)="toggleSidebar()"></i>
+    </header>
+    
+    <div class="menu-bar">
+        <div class="menu">
+            <!-- Search Box -->
+            <li class="search-box" (click)="openSidebar()">
+                <i class='bx bx-search icon'></i>
+                <input 
+                    type="text" 
+                    placeholder="Search..." 
+                    [(ngModel)]="searchTerm"
+                    (input)="onSearch()"
+                >
+                <button 
+                    class="clear-search" 
+                    *ngIf="searchTerm" 
+                    (click)="clearSearch($event)"
+                    title="Clear search"
+                >
+                    ✕
+                </button>
+            </li>
+            
+            <!-- Menu Links -->
+            <ul class="menu-links">
+                <li class="nav-link" *ngFor="let item of filteredItems">
+                    <a [routerLink]="item.route" routerLinkActive="active" (click)="onItemClick()">
+                        <i class='bx' [ngClass]="item.icon"></i>
+                        <span class="text nav-text">{{ item.name }}</span>
+                    </a>
+                </li>
+            </ul>
+
+            <!-- No Results Message -->
+            <li class="no-results" *ngIf="!hasVisibleItems && searchTerm">
+                <div class="no-results-content">
+                    <span class="no-results-icon">🔍</span>
+                    <span class="no-results-text">No results found for "{{ searchTerm }}"</span>
+                </div>
+            </li>
+        </div>
+        
+        <div class="bottom-content">
+            <li class="nav-link">
+                <a href="#" (click)="logout()">
+                    <i class='bx bx-log-out icon'></i>
+                    <span class="text nav-text">Logout</span>
+                </a>
+            </li>
+            
+            <li class="mode">
+                <div class="moon-sun">
+                    <i class='bx bx-moon icon moon'></i>
+                    <i class='bx bx-sun icon sun'></i>
+                </div>
+                <span class="mode-text text">{{ darkModeText }}</span>
+                
+                <div class="toggle-switch" (click)="toggleDarkMode()">
+                    <span class="switch"></span>
+                </div>
+            </li>
+        </div>
+    </div>
+</nav>

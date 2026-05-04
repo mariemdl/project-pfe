@@ -1,0 +1,95 @@
+.subordinates-container {
+    padding: 20px;
+}
+
+.header {
+    margin-bottom: 20px;
+}
+
+.header h2 {
+    margin: 0 0 5px 0;
+    color: #333;
+}
+
+.info {
+    color: #666;
+    font-size: 14px;
+    margin: 0;
+}
+
+.stats {
+    margin-bottom: 15px;
+    padding: 10px;
+    background: #e8f4fd;
+    border-radius: 8px;
+    font-size: 14px;
+    color: #1e90ff;
+}
+
+.table-responsive {
+    overflow-x: auto;
+}
+
+.subordinates-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.subordinates-table th,
+.subordinates-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+}
+
+.subordinates-table th {
+    background: #f5f5f5;
+    font-weight: 600;
+    color: #333;
+}
+
+.subordinates-table tr:hover {
+    background: #f9f9f9;
+}
+
+.role-badge {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.role-badge.viewer {
+    background: #e0e0e0;
+    color: #666;
+}
+
+.role-badge.operator {
+    background: #d1ecf1;
+    color: #0c5460;
+}
+
+.role-badge.manager {
+    background: #d4edda;
+    color: #155724;
+}
+
+.no-data {
+    text-align: center;
+    padding: 40px;
+}
+
+.empty-state {
+    text-align: center;
+    color: #999;
+}
+
+.empty-icon {
+    font-size: 48px;
+    display: block;
+    margin-bottom: 10px;
+}

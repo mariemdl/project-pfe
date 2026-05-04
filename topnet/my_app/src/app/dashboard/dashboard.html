@@ -1,0 +1,165 @@
+<div class="dashboard-container">
+  <!-- Header -->
+  <div class="header">
+    <h1>Dashboard</h1>
+    <p class="subtitle">Overview of your document extraction activity</p>
+    <button class="refresh-btn" (click)="loadDashboard()" [class.spinning]="loading">
+      <span class="refresh-icon">↻</span> Refresh
+    </button>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-container" *ngIf="loading && !stats">
+    <div class="spinner"></div>
+    <p>Loading dashboard...</p>
+  </div>
+
+  <!-- Error State -->
+  <div class="error-container" *ngIf="error">
+    <div class="error-icon">⚠️</div>
+    <h3>Unable to load dashboard</h3>
+    <p>{{ error }}</p>
+    <button class="btn btn-primary" (click)="loadDashboard()">Try Again</button>
+  </div>
+
+  <!-- Dashboard Content -->
+  <div class="dashboard-content" *ngIf="!loading && !error && stats">
+    <!-- KPI Cards -->
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-icon">📊</div>
+        <div class="kpi-content">
+          <div class="kpi-value">{{ stats.total_batches }}</div>
+          <div class="kpi-label">Total Batches</div>
+        </div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-icon">📄</div>
+        <div class="kpi-content">
+          <div class="kpi-value">{{ stats.total_documents }}</div>
+          <div class="kpi-label">Documents Processed</div>
+        </div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-icon">✅</div>
+        <div class="kpi-content">
+          <div class="kpi-value" [style.color]="getSuccessRateColor(stats.success_rate)">
+            {{ stats.success_rate }}%
+          </div>
+          <div class="kpi-label">Success Rate</div>
+        </div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-icon">⏱️</div>
+        <div class="kpi-content">
+          <div class="kpi-value">{{ formatTime(stats.avg_processing_time) }}</div>
+          <div class="kpi-label">Avg Processing Time</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="charts-row">
+      <!-- Document Type Distribution -->
+<div class="chart-card">
+  <h3>Documents by Type</h3>
+  <div class="pie-chart-container">
+    <div class="pie-chart">
+      <!-- Fixed: Dynamic pie chart segments -->
+      <div *ngFor="let type of getDocumentTypeKeys(); let i = index"
+           class="pie-segment"
+           [style.background]="typeConfig[type]?.color"
+           [style.transform]="'rotate(' + getSegmentRotation(i) + 'deg)'"
+           [style.clip-path]="getSegmentClipPath(i)"
+           [style.zIndex]="getDocumentTypeKeys().length - i">
+      </div>
+      <div class="pie-center">📊</div>
+    </div>
+    <div class="pie-legend">
+      <div class="legend-item" *ngFor="let type of getDocumentTypeKeys()">
+        <span class="legend-color" [style.background]="typeConfig[type]?.color"></span>
+        <span class="legend-label">{{ getDocumentTypeLabel(type) }}</span>
+        <span class="legend-value">{{ getDocumentCount(type) }}</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+      <!-- Processing Trend -->
+      <div class="chart-card">
+  <h3>Weekly Activity</h3>
+  <div class="bar-chart">
+    <div class="chart-bars">
+      <div class="chart-bar-wrapper" *ngFor="let day of stats.processing_trend">
+        <div class="chart-bar-container" [title]="day.date + ': ' + day.count + ' documents'">
+          <div class="chart-bar" [style.height.%]="getBarHeight(day.count)">
+            <div class="chart-bar-fill"
+                 [style.height.%]="getSuccessPercentage(day)"
+                 [style.background]="getBarColor(day)">
+            </div>
+          </div>
+        </div>
+        <span class="chart-label">{{ formatDayLabel(day.date) }}</span>
+      </div>
+    </div>
+  </div>
+</div>
+    </div><!-- end charts-row -->
+
+    <!-- Recent Activity -->
+    <div class="activity-card">
+      <div class="card-header">
+        <h3>Recent Activity</h3>
+        <a routerLink="/batches" class="view-all">View All →</a>
+      </div>
+      
+      <div class="activity-list">
+        <div class="activity-item" *ngFor="let activity of stats.recent_activity">
+          <div class="activity-icon">{{ getDocumentTypeIcon(activity.document_type) }}</div>
+          <div class="activity-content">
+            <div class="activity-header">
+              <span class="activity-title">
+                {{ getDocumentTypeLabel(activity.document_type) }} Batch #{{ activity.batch_id }}
+              </span>
+              <span class="activity-status" [style.background]="getStatusColor(activity.status) + '20'"
+                    [style.color]="getStatusColor(activity.status)">
+                {{ getStatusIcon(activity.status) }} {{ activity.status }}
+              </span>
+            </div>
+            <div class="activity-details">
+              <span class="activity-time">{{ formatDate(activity.created_at) }}</span>
+              <span class="activity-doc-count">{{ activity.documents }} document(s)</span>
+            </div>
+          </div>
+          <a [routerLink]="['/extraction/results', activity.batch_id]" class="activity-link">View →</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="quick-actions">
+      <h3>Quick Actions</h3>
+      <div class="action-grid">
+        <a routerLink="/extraction/id-card" class="action-card">
+          <span class="action-icon">🆔</span>
+          <span class="action-label">Extract ID Card</span>
+        </a>
+        <a routerLink="/extraction/invoice" class="action-card">
+          <span class="action-icon">📄</span>
+          <span class="action-label">Extract Invoice</span>
+        </a>
+        <a routerLink="/extraction/passport" class="action-card">
+          <span class="action-icon">🛂</span>
+          <span class="action-label">Extract Passport</span>
+        </a>
+        <a routerLink="/extraction/contract" class="action-card">
+          <span class="action-icon">📝</span>
+          <span class="action-label">Extract Contract</span>
+        </a>
+      </div>
+    </div>
+  </div>
+</div>

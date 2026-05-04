@@ -1,0 +1,21 @@
+{
+  "validation": {
+    "is_type": true,
+    "confidence": 0.94
+  },
+  "extraction": {
+    "fields": [
+      {"name": "contract_number", "value": "CTR-2024-001", "confidence": 0.97},
+      {"name": "contract_date", "value": "2024-03-01", "confidence": 0.96},
+      {"name": "title", "value": "Service Agreement", "confidence": 0.95},
+      {"name": "governing_law", "value": "French Law", "confidence": 0.92}
+    ],
+    "language": "fr",
+    "metadata": {
+      "parties": [
+        {"name": "Company A", "role": "Service Provider"},
+        {"name": "Company B", "role": "Client"}
+      ]
+    }
+  }
+}

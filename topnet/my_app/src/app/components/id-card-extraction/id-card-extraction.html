@@ -1,0 +1,164 @@
+<div class="extraction-container">
+  <div class="header">
+    <h1>ID Card Extraction</h1>
+    <p class="subtitle">Upload both faces of your ID card</p>
+  </div>
+
+  <!-- Card sets -->
+  <div class="card-sets" *ngFor="let card of cards; let i = index">
+    <div class="card-set">
+      <div class="set-header" *ngIf="cards.length > 1">
+        <h3>ID Card #{{ i + 1 }}</h3>
+        <button class="remove-set-btn" (click)="removeCard(i)" title="Remove">✕</button>
+      </div>
+
+      <!-- Case: no files yet – show both options -->
+      <ng-container *ngIf="!card.type">
+        <!-- Front & back image zones (side by side) -->
+        <div class="image-row">
+          <!-- Front -->
+          <div class="upload-zone half"
+               (click)="frontInput.click()"
+               (dragover)="onDragOver($event, i, 'front')"
+               (dragleave)="onDragLeave($event, i, 'front')"
+               (drop)="onDrop($event, i, 'front')"
+               [class.active]="activeDragSet === i && activeDragSide === 'front'">
+            <input #frontInput type="file" (change)="onImageSelected($event, i, 'front')" accept="image/*" hidden>
+            <div class="zone-content">
+              <div class="chessboard-bg"></div>
+              <div class="upload-prompt">
+                <span class="icon">📤</span>
+                <span>Drag & Drop or Click to upload</span>
+                <small>Front side</small>
+              </div>
+            </div>
+          </div>
+
+          <!-- Back -->
+          <div class="upload-zone half"
+               (click)="backInput.click()"
+               (dragover)="onDragOver($event, i, 'back')"
+               (dragleave)="onDragLeave($event, i, 'back')"
+               (drop)="onDrop($event, i, 'back')"
+               [class.active]="activeDragSet === i && activeDragSide === 'back'">
+            <input #backInput type="file" (change)="onImageSelected($event, i, 'back')" accept="image/*" hidden>
+            <div class="zone-content">
+              <div class="chessboard-bg"></div>
+              <div class="upload-prompt">
+                <span class="icon">📤</span>
+                <span>Drag & Drop or Click to upload</span>
+                <small>Back side</small>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- OR separator -->
+        <div class="or-divider">OR</div>
+
+        <!-- Single file zone -->
+        <div class="file-row">
+          <div class="upload-zone full"
+               (click)="fileInput.click()"
+               (dragover)="onFileDragOver($event, i)"
+               (dragleave)="onFileDragLeave($event, i)"
+               (drop)="onFileDrop($event, i)"
+               [class.active]="activeFileDrag === i">
+            <input #fileInput type="file" (change)="onFileSelected($event, i)" accept=".pdf,image/*" hidden>
+            <div class="zone-content">
+              <div class="chessboard-bg"></div>
+              <div class="upload-prompt">
+                <span class="icon">📄</span>
+                <span>Drag & Drop or click to upload file</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </ng-container>
+
+      <!-- Case: images uploaded – show previews (partial upload allowed) -->
+      <ng-container *ngIf="card.type === 'images'">
+        <div class="image-row">
+          <!-- Front side -->
+          <div class="upload-zone half" [class.has-file]="card.frontFile"
+               (click)="!card.frontFile && frontInput2.click()"
+               (dragover)="onDragOver($event, i, 'front')"
+               (dragleave)="onDragLeave($event, i, 'front')"
+               (drop)="onDrop($event, i, 'front')"
+               [class.active]="activeDragSet === i && activeDragSide === 'front'">
+            <input #frontInput2 type="file" (change)="onImageSelected($event, i, 'front')" accept="image/*" hidden>
+            <ng-container *ngIf="card.frontFile">
+              <img *ngIf="card.frontPreview" [src]="card.frontPreview" class="preview-img" alt="front">
+              <div class="file-info" *ngIf="!card.frontPreview">{{ card.frontFile?.name }}</div>
+              <button class="remove-file" (click)="removeFile(i, 'front')">✕</button>
+            </ng-container>
+            <ng-container *ngIf="!card.frontFile">
+              <div class="zone-content">
+                <div class="upload-prompt">
+                  <span class="icon">📤</span>
+                  <span>Add Front Side</span>
+                  <small>Optional</small>
+                </div>
+              </div>
+            </ng-container>
+            <span class="side-label">FRONT</span>
+          </div>
+          <!-- Back side -->
+          <div class="upload-zone half" [class.has-file]="card.backFile"
+               (click)="!card.backFile && backInput2.click()"
+               (dragover)="onDragOver($event, i, 'back')"
+               (dragleave)="onDragLeave($event, i, 'back')"
+               (drop)="onDrop($event, i, 'back')"
+               [class.active]="activeDragSet === i && activeDragSide === 'back'">
+            <input #backInput2 type="file" (change)="onImageSelected($event, i, 'back')" accept="image/*" hidden>
+            <ng-container *ngIf="card.backFile">
+              <img *ngIf="card.backPreview" [src]="card.backPreview" class="preview-img" alt="back">
+              <div class="file-info" *ngIf="!card.backPreview">{{ card.backFile?.name }}</div>
+              <button class="remove-file" (click)="removeFile(i, 'back')">✕</button>
+            </ng-container>
+            <ng-container *ngIf="!card.backFile">
+              <div class="zone-content">
+                <div class="upload-prompt">
+                  <span class="icon">📤</span>
+                  <span>Add Back Side</span>
+                  <small>Optional</small>
+                </div>
+              </div>
+            </ng-container>
+            <span class="side-label">BACK</span>
+          </div>
+        </div>
+      </ng-container>
+
+      <!-- Case: single file uploaded – show preview -->
+      <ng-container *ngIf="card.type === 'file'">
+        <div class="file-row">
+          <div class="upload-zone full has-file">
+            <span class="file-icon large">📑</span>
+            <div class="file-info">
+              {{ card.file?.name }}
+              <span class="file-size">({{ card.file?.size | fileSize }})</span>
+            </div>
+            <button class="remove-file" (click)="removeFile(i, 'file')">✕</button>
+          </div>
+        </div>
+      </ng-container>
+    </div>
+  </div>
+
+  <!-- Add another ID card button -->
+  <div class="add-more">
+    <button class="add-btn" (click)="addCard()">
+      <span class="plus-icon">+</span> Add another ID card
+    </button>
+  </div>
+
+  <!-- Export button (centered, orange) -->
+  <div class="export-section">
+    <button class="export-btn" [disabled]="!canExport() || isProcessing" (click)="extractData('none', false)">
+      <span class="export-icon" *ngIf="!isProcessing">⬇️</span>
+      <span class="spinner" *ngIf="isProcessing"></span>
+      {{ isProcessing ? 'Processing...' : 'Extract Data' }}
+    </button>
+  </div>
+</div>

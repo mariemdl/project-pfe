@@ -1,0 +1,80 @@
+<div class="extraction-container">
+  <div class="header">
+    <h1>Contract Extraction</h1>
+    <p class="subtitle">Upload contract documents for data extraction</p>
+  </div>
+
+  <!-- Contract Sets Container -->
+  <div class="contract-sets" *ngFor="let contract of contracts; let i = index">
+    <div class="contract-set">
+      <div class="set-header" *ngIf="contracts.length > 1">
+        <h3>Contract #{{ i + 1 }}</h3>
+        <button class="remove-set-btn" (click)="removeContract(i)" title="Remove this contract">✕</button>
+      </div>
+      
+      <!-- No file yet - show upload zone -->
+      <ng-container *ngIf="!contract.type">
+        <div class="upload-section">
+          <div class="upload-zone"
+               (click)="fileInput.click()"
+               (dragover)="onDragOver($event, i)"
+               (dragleave)="onDragLeave($event, i)"
+               (drop)="onDrop($event, i)"
+               [class.active]="activeDragIndex === i">
+            <input #fileInput type="file" 
+                   (change)="onFileSelected($event, i)" 
+                   accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.tiff" 
+                   hidden>
+            <div class="zone-content">
+              <div class="chessboard-bg"></div>
+              <div class="upload-prompt">
+                <span class="icon">📄</span>
+                <span>Drag & Drop or Click to upload</span>
+                <small>Supports: PDF, DOC, DOCX, Images, Text</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </ng-container>
+
+      <!-- File uploaded - show preview -->
+      <ng-container *ngIf="contract.type === 'file'">
+        <div class="file-preview-section">
+          <div class="file-preview-card">
+            <div class="file-icon-large">📑</div>
+            <div class="file-details">
+              <div class="file-name">{{ contract.file?.name }}</div>
+              <div class="file-size">{{ contract.file?.size | fileSize }}</div>
+              <div class="file-status" [class.processing]="contract.status === 'processing'">
+                {{ contract.status === 'processing' ? 'Processing...' : 'Ready for extraction' }}
+              </div>
+            </div>
+            <button class="remove-file-btn" (click)="removeFile(i)">✕</button>
+          </div>
+          
+          <!-- If the contract has multiple sections, show badge -->
+          <div class="multi-section-badge" *ngIf="contract.sectionCount && contract.sectionCount > 1">
+            <span class="badge-icon">📑</span>
+            <span>{{ contract.sectionCount }} sections detected in this document</span>
+          </div>
+        </div>
+      </ng-container>
+    </div>
+  </div>
+
+  <!-- Add Another Contract Button -->
+  <div class="add-more">
+    <button class="add-btn" (click)="addContract()">
+      <span class="plus-icon">+</span> Add another contract
+    </button>
+  </div>
+
+  <!-- Export Button with loading state -->
+  <div class="export-section">
+    <button class="export-btn" [disabled]="!canExport() || isProcessing" (click)="extractData('none', false)">
+      <span class="export-icon" *ngIf="!isProcessing">⬇️</span>
+      <span class="spinner" *ngIf="isProcessing"></span>
+      {{ isProcessing ? 'Processing...' : 'Extract Data' }}
+    </button>
+  </div>
+</div>

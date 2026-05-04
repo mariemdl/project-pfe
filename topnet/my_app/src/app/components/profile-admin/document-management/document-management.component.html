@@ -1,0 +1,48 @@
+<div class="container">
+  <h2>📄 Document Management</h2>
+
+  <!-- Filters -->
+  <div class="filters">
+    <select [(ngModel)]="statusFilter" (change)="loadDocuments()" aria-label="filter by status">
+      <option value="">All Status</option>
+      <option value="pending">Pending</option>
+      <option value="processing">Processing</option>
+      <option value="completed">Completed</option>
+      <option value="failed">Failed</option>
+    </select>
+  </div>
+
+  <!-- Documents Table -->
+  <table class="doc-table">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Filename</th>
+        <th>Owner</th>
+        <th>Status</th>
+        <th>Created</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let doc of documents">
+        <td>{{ doc.id }}</td>
+        <td>{{ doc.filename }}</td>
+        <td>{{ doc.owner }}</td>
+        <td>
+          <select [(ngModel)]="doc.status" (change)="updateStatus(doc)" aria-label="update status">
+            <option value="pending">⏳ Pending</option>
+            <option value="processing">🔄 Processing</option>
+            <option value="completed">✅ Completed</option>
+            <option value="failed">❌ Failed</option>
+          </select>
+        </td>
+        <td>{{ doc.created_at | date:'short' }}</td>
+        <td class="actions">
+          <button (click)="viewDocument(doc)" class="btn-icon" title="View">👁️</button>
+          <button (click)="deleteDocument(doc)" class="btn-icon danger" title="Delete">🗑️</button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>

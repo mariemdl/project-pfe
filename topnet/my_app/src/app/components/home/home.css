@@ -1,0 +1,144 @@
+.welcome-section {
+  text-align: center;
+  padding: 2.5rem 1rem 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.welcome-section h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1E3A8A;
+  margin-bottom: 0.5rem;
+  letter-spacing: -0.5px;
+}
+
+.welcome-section .subtitle {
+  font-size: 1rem;
+  color: #64748b;
+  margin: 0;
+}
+
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.5rem;
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 0 1rem 2rem;
+}
+
+.document-card {
+  background: #fff;
+  border-radius: 18px;
+  padding: 2rem 1.5rem 1.75rem;
+  text-align: center;
+  cursor: pointer;
+  transition: transform 0.22s ease, box-shadow 0.22s ease;
+  box-shadow: 0 2px 12px rgba(30, 58, 138, 0.08);
+  border: 1.5px solid #DBEAFE;
+  position: relative;
+  overflow: hidden;
+}
+
+.document-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #1E3A8A, #f97316);
+  opacity: 0;
+  transition: opacity 0.22s ease;
+}
+
+.document-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 12px 32px rgba(30, 58, 138, 0.15);
+  border-color: #93C5FD;
+}
+
+.document-card:hover::before {
+  opacity: 1;
+}
+
+.card-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 72px;
+  background: linear-gradient(135deg, #EFF6FF, #DBEAFE);
+  border-radius: 50%;
+  border: 2px solid #BFDBFE;
+}
+
+.document-card h3 {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #1E3A8A;
+  margin-bottom: 0.6rem;
+}
+
+.document-card p {
+  color: #64748b;
+  font-size: 0.875rem;
+  line-height: 1.55;
+  margin-bottom: 1.5rem;
+}
+
+.card-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: #f97316;
+  font-weight: 700;
+  font-size: 0.9rem;
+  transition: gap 0.2s ease;
+}
+
+.document-card:hover .card-action {
+  gap: 0.6rem;
+}
+
+/* Dark mode */
+body.dark .document-card {
+  background: #1e293b;
+  border-color: #334155;
+}
+
+body.dark .document-card:hover {
+  border-color: #475569;
+}
+
+body.dark .document-card h3 {
+  color: #93C5FD;
+}
+
+body.dark .document-card p {
+  color: #94a3b8;
+}
+
+body.dark .card-icon {
+  background: linear-gradient(135deg, #1e3a8a44, #1e40af44);
+  border-color: #1e40af;
+}
+
+body.dark .welcome-section h1 {
+  color: #93C5FD;
+}
+
+body.dark .welcome-section .subtitle {
+  color: #94a3b8;
+}
+
+@media (max-width: 640px) {
+  .cards-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .welcome-section h1 {
+    font-size: 1.5rem;
+  }
+}

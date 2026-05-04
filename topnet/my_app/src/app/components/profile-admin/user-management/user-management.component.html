@@ -1,0 +1,96 @@
+<div class="container">
+  <div class="header">
+    <h2>👥 Profile Management</h2>
+    <button class="btn-primary" (click)="createProfile()">+ Create Profile</button>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters">
+    <label>Show:</label>
+    <select [(ngModel)]="statusFilter" (change)="loadUsers()" aria-label="load users">
+      <option value="all">All Users</option>
+      <option value="active">Active Only</option>
+      <option value="inactive">Inactive Only</option>
+    </select>
+
+    <input 
+      type="text" 
+      [(ngModel)]="searchTerm" 
+      (input)="loadUsers()" 
+      placeholder="Search by name or email..."
+      class="search-box"
+    />
+  </div>
+
+  <!-- Stats -->
+  <div class="stats">
+    Total: {{ users.length }} | 
+    Active: {{ users.filter(u => u.is_active).length }} | 
+    Inactive: {{ users.filter(u => !u.is_active).length }}
+  </div>
+
+  <!-- Users Table -->
+  <div class="table-responsive">
+    <table class="user-table">
+      <thead>
+        <tr>
+          <th>Username</th>
+          <th>Email</th>
+          <th>Full Name</th>
+          <th>Role</th>
+          <th>Permissions</th>
+          <th>Manager</th>
+          <th>Subordinates</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let user of users">
+          <td>{{ user.username }}</td>
+          <td>{{ user.email }}</td>
+          <td>{{ user.full_name }}</td>
+          <td>
+            <span class="badge" [class]="user.role">
+              {{ user.role === 'manager' ? '👔 Manager' : 
+                user.role === 'profile_admin' ? '👤 Profile Admin' : 
+                user.role === 'system_admin' ? '🖥️ System Admin' : 
+                user.role === 'admin' ? '👑 Super Admin' : 
+                '👤 User'  }}
+            </span>
+          </td>
+          <td>
+            <span *ngFor="let p of getUserPermissions(user.permissions)" class="perm-badge">
+              {{ p }}
+            </span>
+            <span *ngIf="!user.permissions || user.permissions.length == 0" class="no-perms">No permissions</span>
+          </td>
+          <td>
+            <span *ngIf="user.manager_id">
+              {{ getManagerName(user.manager_id) }}
+            </span>
+            <span *ngIf="!user.manager_id" class="no-manager">—</span>
+          </td>
+          <td>
+            <span *ngIf="user.subordinates?.length">
+              {{ user.subordinates?.length || 0 }} subordinates
+            </span>
+            <span *ngIf="!user.subordinates?.length" class="no-sub">—</span>
+          </td>
+          <td>
+            <span class="status" [class.active]="user.is_active">
+              {{ user.is_active ? '🟢 Active' : '🔴 Inactive' }}
+            </span>
+          </td>
+          <td class="actions">
+            <button (click)="editUser(user)" class="btn-icon" title="Edit">✏️</button>
+            <button (click)="toggleStatus(user)" class="btn-icon" [class.warning]="user.is_active">
+              {{ user.is_active ? '🔴' : '🟢' }}
+            </button>
+            <button (click)="deleteUser(user)" class="btn-icon danger" title="Delete">🗑️</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

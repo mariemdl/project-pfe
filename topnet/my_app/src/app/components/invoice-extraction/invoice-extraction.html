@@ -1,0 +1,80 @@
+<div class="extraction-container">
+  <div class="header">
+    <h1>Invoice Extraction</h1>
+    <p class="subtitle">Upload invoice documents for data extraction</p>
+  </div>
+
+  <!-- Invoice Sets Container -->
+  <div class="invoice-sets" *ngFor="let invoice of invoices; let i = index">
+    <div class="invoice-set">
+      <div class="set-header" *ngIf="invoices.length > 1">
+        <h3>Invoice #{{ i + 1 }}</h3>
+        <button class="remove-set-btn" (click)="removeInvoice(i)" title="Remove this invoice">✕</button>
+      </div>
+      
+      <!-- No file yet - show upload zone -->
+      <ng-container *ngIf="!invoice.type">
+        <div class="upload-section">
+          <div class="upload-zone"
+               (click)="fileInput.click()"
+               (dragover)="onDragOver($event, i)"
+               (dragleave)="onDragLeave($event, i)"
+               (drop)="onDrop($event, i)"
+               [class.active]="activeDragIndex === i">
+            <input #fileInput type="file" 
+                   (change)="onFileSelected($event, i)" 
+                   accept=".pdf,.jpg,.jpeg,.png,.tiff,.bmp" 
+                   hidden>
+            <div class="zone-content">
+              <div class="chessboard-bg"></div>
+              <div class="upload-prompt">
+                <span class="icon">📄</span>
+                <span>Drag & Drop or Click to upload</span>
+                <small>Supports: PDF, Images (JPG, PNG, TIFF)</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </ng-container>
+
+      <!-- File uploaded - show preview -->
+      <ng-container *ngIf="invoice.type === 'file'">
+        <div class="file-preview-section">
+          <div class="file-preview-card">
+            <div class="file-icon-large">📑</div>
+            <div class="file-details">
+              <div class="file-name">{{ invoice.file?.name }}</div>
+              <div class="file-size">{{ invoice.file?.size | fileSize }}</div>
+              <div class="file-status" [class.processing]="invoice.status === 'processing'">
+                {{ invoice.status === 'processing' ? 'Processing...' : 'Ready for extraction' }}
+              </div>
+            </div>
+            <button class="remove-file-btn" (click)="removeFile(i)">✕</button>
+          </div>
+          
+          <!-- If the file contains multiple invoices, show count -->
+          <div class="multi-invoice-badge" *ngIf="invoice.invoiceCount && invoice.invoiceCount > 1">
+            <span class="badge-icon">📊</span>
+            <span>{{ invoice.invoiceCount }} invoices detected in this document</span>
+          </div>
+        </div>
+      </ng-container>
+    </div>
+  </div>
+
+  <!-- Add Another Invoice Button -->
+  <div class="add-more">
+    <button class="add-btn" (click)="addInvoice()">
+      <span class="plus-icon">+</span> Add another invoice
+    </button>
+  </div>
+
+  <!-- Export Button with loading state -->
+  <div class="export-section">
+    <button class="export-btn" [disabled]="!canExport() || isProcessing" (click)="extractData('none', false)">
+      <span class="export-icon" *ngIf="!isProcessing">⬇️</span>
+      <span class="spinner" *ngIf="isProcessing"></span>
+      {{ isProcessing ? 'Processing...' : 'Extract Data' }}
+    </button>
+  </div>
+</div>

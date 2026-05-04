@@ -1,0 +1,341 @@
+.extraction-container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.header {
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.header h1 {
+  font-size: 2rem;
+  color: var(--primary-color, #1E3A8A);
+  margin-bottom: 0.5rem;
+}
+
+.subtitle {
+  color: var(--text-light, #6B7280);
+  font-size: 1.1rem;
+}
+
+.invoice-set {
+  background: white;
+  border: 1px solid var(--border-color, #E5E7EB);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.set-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.set-header h3 {
+  font-size: 1.2rem;
+  color: var(--primary-color, #1E3A8A);
+  margin: 0;
+}
+
+.remove-set-btn {
+  background: none;
+  border: none;
+  color: #ef4444;
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.remove-set-btn:hover {
+  background: #fee2e2;
+}
+
+.upload-zone {
+  border: 2px dashed var(--border-color, #E5E7EB);
+  border-radius: 12px;
+  min-height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: var(--card-bg, #F9FAFB);
+  position: relative;
+  overflow: hidden;
+}
+
+.upload-zone.active {
+  border-color: var(--accent-orange, #f97316);
+  background: rgba(249, 115, 22, 0.05);
+}
+
+.upload-zone.has-file {
+  border-style: solid;
+  border-color: var(--accent-orange, #f97316);
+  background: #f0fdf4;
+}
+
+.chessboard-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: 
+    linear-gradient(45deg, #ccc 25%, transparent 25%),
+    linear-gradient(-45deg, #ccc 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #ccc 75%),
+    linear-gradient(-45deg, transparent 75%, #ccc 75%);
+  background-size: 20px 20px;
+  background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+  opacity: 0.2;
+  z-index: 0;
+}
+
+.zone-content {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  padding: 2rem;
+}
+
+.upload-prompt .icon {
+  display: block;
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.upload-prompt span {
+  display: block;
+  font-size: 1.1rem;
+  color: var(--text-color, #111827);
+  margin-bottom: 0.5rem;
+}
+
+.upload-prompt small {
+  display: block;
+  color: var(--text-light, #6B7280);
+  font-size: 0.9rem;
+}
+
+/* File preview styles */
+.file-preview-section {
+  padding: 1rem;
+}
+
+.file-preview-card {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 1rem;
+  background: var(--card-bg, #F9FAFB);
+  border-radius: 8px;
+  position: relative;
+}
+
+.file-icon-large {
+  font-size: 3rem;
+}
+
+.file-details {
+  flex: 1;
+}
+
+.file-name {
+  font-weight: 600;
+  color: var(--text-color, #111827);
+  margin-bottom: 0.25rem;
+  word-break: break-word;
+}
+
+.file-size {
+  font-size: 0.9rem;
+  color: var(--text-light, #6B7280);
+  margin-bottom: 0.5rem;
+}
+
+.file-status {
+  font-size: 0.9rem;
+  color: var(--accent-color, #0F766E);
+}
+
+.file-status.processing {
+  color: var(--accent-orange, #f97316);
+}
+
+.remove-file-btn {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  background: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.remove-file-btn:hover {
+  background: #dc2626;
+}
+
+.multi-invoice-badge {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background: #fef3c7;
+  border: 1px solid #fde68a;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #92400e;
+}
+
+.badge-icon {
+  font-size: 1.2rem;
+}
+
+/* Add button */
+.add-more {
+  display: flex;
+  justify-content: center;
+  margin: 2rem 0;
+}
+
+.add-btn {
+  background: white;
+  border: 2px dashed var(--accent-orange, #f97316);
+  border-radius: 40px;
+  padding: 0.75rem 2rem;
+  font-size: 1rem;
+  color: var(--accent-orange, #f97316);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s;
+}
+
+.add-btn:hover {
+  background: rgba(249, 115, 22, 0.1);
+  border-style: solid;
+}
+
+.plus-icon {
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
+/* Export button */
+.export-section {
+  display: flex;
+  justify-content: center;
+  margin: 2rem 0;
+}
+
+.export-btn {
+  background: var(--accent-orange, #f97316);
+  color: white;
+  border: none;
+  border-radius: 40px;
+  padding: 1rem 3rem;
+  font-size: 1.2rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  box-shadow: 0 4px 10px rgba(249, 115, 22, 0.4);
+  transition: all 0.2s;
+}
+
+.export-btn:hover:not(:disabled) {
+  background: #ea580c;
+  transform: scale(1.02);
+}
+
+.export-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: #d1d5db;
+  box-shadow: none;
+}
+
+.export-icon {
+  font-size: 1.2rem;
+}
+
+/* Dark mode adjustments */
+body.dark .invoice-set {
+  background: #2d2d2d;
+  border-color: #404040;
+}
+
+body.dark .upload-zone {
+  background: #374151;
+}
+
+body.dark .file-preview-card {
+  background: #374151;
+}
+
+body.dark .multi-invoice-badge {
+  background: #4b5563;
+  border-color: #6b7280;
+  color: #fcd34d;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .extraction-container {
+    padding: 1rem;
+  }
+
+  .file-preview-card {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .remove-file-btn {
+    top: 0.5rem;
+    right: 0.5rem;
+  }
+}
+
+/**/
+/* Loading spinner */
+.spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-radius: 50%;
+  border-top-color: white;
+  animation: spin 1s ease-in-out infinite;
+  margin-right: 8px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.export-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Processing status enhancement */
+.file-status.processing {
+  color: var(--accent-orange, #f97316);
+  font-weight: 500;
+}

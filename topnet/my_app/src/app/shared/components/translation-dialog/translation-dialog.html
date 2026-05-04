@@ -1,0 +1,32 @@
+<h2 mat-dialog-title>🌐 Translation Options</h2>
+
+<mat-dialog-content>
+  <p>Would you like to translate the extracted data?</p>
+
+  <mat-radio-group [(ngModel)]="selectedLanguage" (change)="onLanguageChange()">
+    <mat-radio-button value="none">No translation</mat-radio-button>
+    <mat-radio-button *ngFor="let lang of data.languages" [value]="lang">
+      {{ lang }}
+    </mat-radio-button>
+  </mat-radio-group>
+
+  <div *ngIf="selectedLanguage !== 'none'" class="translation-scope">
+    <mat-checkbox [(ngModel)]="translateAllFields">
+      Translate all fields
+    </mat-checkbox>
+    <small class="hint">
+      (If unchecked, only text fields like name, address will be translated)
+    </small>
+  </div>
+
+  <div *ngIf="warningMessage" class="warning">
+    {{ warningMessage }}
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="onCancel()">Cancel</button>
+  <button mat-raised-button color="primary" (click)="onConfirm()">
+    Confirm
+  </button>
+</mat-dialog-actions>

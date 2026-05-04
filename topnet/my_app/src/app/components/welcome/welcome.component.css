@@ -1,0 +1,88 @@
+.welcome-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 80vh;
+  padding: 20px;
+}
+
+.welcome-card {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 10px 40px rgba(30, 58, 138, 0.12);
+  padding: 2.5rem;
+  max-width: 520px;
+  width: 100%;
+  text-align: center;
+  border: 1px solid #DBEAFE;
+  animation: fadeIn 0.4s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.welcome-icon {
+  font-size: 56px;
+  margin-bottom: 1rem;
+}
+
+.welcome-card h1 {
+  color: #1E3A8A;
+  margin-bottom: 0.75rem;
+  font-size: 1.6rem;
+  font-weight: 700;
+}
+
+.welcome-message {
+  color: #16a34a;
+  font-size: 0.95rem;
+  margin-bottom: 0.5rem;
+}
+
+.instruction {
+  color: #64748b;
+  font-size: 0.875rem;
+  margin-bottom: 1.5rem;
+}
+
+.quick-links {
+  background: #EFF6FF;
+  border: 1px solid #DBEAFE;
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+  text-align: left;
+}
+
+.quick-links .hint {
+  font-weight: 600;
+  color: #2563EB;
+  margin-bottom: 0.75rem;
+  font-size: 0.875rem;
+}
+
+.quick-links ul {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
+.quick-links li {
+  color: #374151;
+  margin: 6px 0;
+  font-size: 0.875rem;
+}
+
+.spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid #DBEAFE;
+  border-top: 3px solid #2563EB;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto 1rem;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}

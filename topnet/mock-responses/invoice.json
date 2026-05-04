@@ -1,0 +1,21 @@
+{
+  "validation": {
+    "is_type": true,
+    "confidence": 0.96
+  },
+  "extraction": {
+    "fields": [
+      {"name": "invoice_number", "value": "INV-2024-001", "confidence": 0.99},
+      {"name": "date", "value": "2024-03-15", "confidence": 0.98},
+      {"name": "vendor_name", "value": "Company SARL", "confidence": 0.95},
+      {"name": "total", "value": "1250.00", "confidence": 0.99}
+    ],
+    "language": "fr",
+    "metadata": {
+      "line_items": [
+        {"description": "Service A", "quantity": 2, "unit_price": 500, "total": 1000},
+        {"description": "Service B", "quantity": 1, "unit_price": 250, "total": 250}
+      ]
+    }
+  }
+}

@@ -1,0 +1,60 @@
+<div class="login-container">
+  <div class="login-card">
+    <div class="login-header">
+      <img src="assets/images/logo.png" alt="Topnet" class="login-logo" onerror="this.style.display='none'">
+      <h1>Topnet Data Extraction</h1>
+      <p>Please sign in to continue</p>
+    </div>
+    
+    <!-- Message d'erreur amélioré -->
+    <div *ngIf="error" class="error-alert" role="alert">
+      <span class="error-icon">⚠️</span>
+      <span class="error-text">{{ error }}</span>
+      <button type="button" class="close-error" (click)="clearError()">✖</button>
+    </div>
+    
+    <form (ngSubmit)="onSubmit()" #loginForm="ngForm">
+      <div class="form-group">
+        <label for="username">Username or Email</label>
+        <input 
+          type="text" 
+          id="username" 
+          name="username"
+          [(ngModel)]="username"
+          required
+          placeholder="Enter your username or email"
+          class="form-control"
+          [class.error-input]="error && !username"
+          autocomplete="off"
+          readonly
+          onfocus="this.removeAttribute('readonly')">
+      </div>
+      
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input 
+          type="password" 
+          id="password" 
+          name="password"
+          [(ngModel)]="password"
+          required
+          placeholder="Enter your password"
+          class="form-control"
+          [class.error-input]="error && !password"
+          autocomplete="off"
+          readonly
+          onfocus="this.removeAttribute('readonly')">
+      </div>
+      
+      <button type="submit" class="btn-login" [disabled]="loading">
+        <span *ngIf="!loading">🔐 Login</span>
+        <span *ngIf="loading" class="spinner-small"></span>
+        <span *ngIf="loading">Logging in...</span>
+      </button>
+    </form>
+
+    <div class="forgot-password-link">
+      <a (click)="goToForgotPassword()">Forgot Password?</a>
+    </div>
+  </div>
+</div>

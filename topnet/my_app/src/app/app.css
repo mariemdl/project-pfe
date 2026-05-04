@@ -1,0 +1,22 @@
+.main-content {
+  margin-left: 250px;
+  padding: 2rem;
+  min-height: 100vh;
+  background: var(--body-color, #EFF6FF);
+  transition: margin-left 0.3s ease;
+}
+
+.main-content.sidebar-hidden {
+  margin-left: 0;
+}
+
+.sidebar.close ~ .main-content {
+  margin-left: 88px;
+}
+
+@media (max-width: 768px) {
+  .main-content {
+    margin-left: 88px;
+    padding: 1rem;
+  }
+}

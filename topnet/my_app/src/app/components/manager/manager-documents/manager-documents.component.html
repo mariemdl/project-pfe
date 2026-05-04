@@ -1,0 +1,153 @@
+<div class="documents-container">
+    <div class="header">
+        <h2>📄 Team Documents</h2>
+        <p>Documents from you and your subordinates</p>
+    </div>
+
+    <!-- Filters -->
+    <div class="filters-card">
+        <div class="filter-row">
+          <div class="filter-group">
+            <label>👤 Team Member</label>
+            <select [(ngModel)]="filters.userId" (change)="applyFilters()" aria-label="user filter">
+              <option [value]="null">All Team Members</option>
+              <option *ngFor="let sub of subordinates" [value]="sub.id">
+                {{ sub.full_name || sub.username }}
+              </option>
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <label>🔍 Search</label>
+            <input 
+              type="text" 
+              [(ngModel)]="filters.search" 
+              (input)="applyFilters()" 
+              placeholder="Search by filename..."
+            />
+          </div>
+        </div>
+
+        <div class="filter-row">
+          <div class="filter-group">
+            <label>📅 Quick Filter</label>
+            <select [(ngModel)]="filters.period" (change)="onPeriodChange()" aria-label="perio filter">
+              <option [value]="null">All Time</option>
+              <option value="day">Last 24 Hours</option>
+              <option value="week">Last 7 Days</option>
+              <option value="month">Last 30 Days</option>
+              <option value="year">Last Year</option>
+              <option value="custom">Custom Range</option>
+            </select>
+          </div>
+
+          <div class="filter-group" *ngIf="filters.period === 'custom'">
+            <label>📅 From Date</label>
+            <input type="date" [(ngModel)]="filters.dateFrom" (change)="applyFilters()" />
+          </div>
+
+          <div class="filter-group" *ngIf="filters.period === 'custom'">
+            <label>📅 To Date</label>
+            <input type="date" [(ngModel)]="filters.dateTo" (change)="applyFilters()" />
+          </div>
+        </div>
+
+        <div class="filter-actions">
+          <button class="btn-clear" (click)="clearFilters()">Clear Filters</button>
+          <span class="result-count" *ngIf="totalCount !== null">
+            Found {{ totalCount }} document(s)
+          </span>
+        </div>
+    </div>
+
+    <!-- Documents Table -->
+    <div class="table-responsive">
+        <table class="documents-table">
+            <thead>
+                <tr>
+                    <th>Filename</th>
+                    <th>Owner</th>
+                    <th>Status</th>
+                    <th>Created</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let doc of documents">
+                    <td>{{ doc.filename }}</td>
+                    <td>
+                        <span class="owner-name">{{ doc.owner_name }}</span>
+                    </td>
+                    <td>
+                        <span class="status-badge" [class]="doc.status">
+                        {{ doc.status }}
+                        </span>
+                    </td>
+                    <td>{{ formatDate(doc.created_at) }}</td>
+                    <td class="actions">
+                        <button class="btn-view" (click)="viewDocument(doc)" title="View Details">👁️</button>
+                        <button class="btn-download" (click)="downloadDocument(doc)" title="Download">⬇️</button>
+                    </td>
+                </tr>
+                <tr *ngIf="documents.length === 0">
+                    <td colspan="5" class="no-data">
+                        <div class="empty-state">
+                            <span class="empty-icon">📂</span>
+                            <p>No documents found</p>
+                            <small>Try changing your filters</small>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination" *ngIf="totalCount > limit">
+        <button (click)="prevPage()" [disabled]="skip === 0">← Previous</button>
+        <span>Page {{ page }} of {{ totalPages }}</span>
+        <button (click)="nextPage()" [disabled]="skip + limit >= totalCount">Next →</button>
+    </div>
+</div>
+
+<!-- Document Detail Modal -->
+<div class="modal" *ngIf="selectedDoc" (click)="closeModalOnBackdrop($event)">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>📄 Document Details</h3>
+            <button class="close" (click)="closeModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="detail-row">
+                <strong>Filename:</strong> {{ selectedDoc.filename }}
+            </div>
+            <div class="detail-row">
+                <strong>Owner:</strong> {{ selectedDoc.owner_name }}
+            </div>
+            <div class="detail-row">
+                <strong>Status:</strong> 
+                <span class="status-badge" [class]="selectedDoc.status">{{ selectedDoc.status }}</span>
+            </div>
+            <div class="detail-row">
+                <strong>Created:</strong> {{ formatDate(selectedDoc.created_at) }}
+            </div>
+            <div class="detail-row">
+                <strong>Batch ID:</strong> {{ selectedDoc.batch_id }}
+            </div>
+            <div class="detail-row" *ngIf="extractedFields.length > 0">
+                <strong>Extracted Data:</strong>
+                <div class="extracted-fields">
+                    <div *ngFor="let field of extractedFields" class="field-item">
+                        <span class="field-name">{{ field.name }}:</span>
+                        <span class="field-value">{{ field.value }}</span>
+                        <span class="field-confidence">({{ field.confidence }}%)</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-secondary" (click)="closeModal()">Close</button>
+            <button class="btn-primary" (click)="downloadDocument(selectedDoc)">Download</button>
+        </div>
+    </div>
+</div>

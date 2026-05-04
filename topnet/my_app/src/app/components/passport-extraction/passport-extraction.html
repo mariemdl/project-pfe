@@ -1,0 +1,164 @@
+<div class="extraction-container">
+  <div class="header">
+    <h1>Passport Extraction</h1>
+    <p class="subtitle">Upload passport documents for data extraction</p>
+  </div>
+
+  <!-- Mode selector: Passports can be uploaded as images (data page + photo) or as a single file -->
+  <div class="mode-selector">
+    <label class="mode-option" [class.active]="uploadMode === 'images'">
+      <input type="radio" name="uploadMode" [(ngModel)]="uploadMode" value="images">
+      <span>📸 Upload as Images (Data Page + Photo Page)</span>
+    </label>
+    <label class="mode-option" [class.active]="uploadMode === 'file'">
+      <input type="radio" name="uploadMode" [(ngModel)]="uploadMode" value="file">
+      <span>📄 Upload as Single File (PDF/Image)</span>
+    </label>
+  </div>
+
+  <!-- Passport Sets Container -->
+  <div class="passport-sets" *ngFor="let passport of passports; let i = index">
+    <div class="passport-set">
+      <div class="set-header" *ngIf="passports.length > 1">
+        <h3>Passport #{{ i + 1 }}</h3>
+        <button class="remove-set-btn" (click)="removePassport(i)" title="Remove this passport">✕</button>
+      </div>
+
+      <!-- Image Mode: Data Page + Photo Page -->
+      <ng-container *ngIf="uploadMode === 'images'">
+        <!-- No files yet -->
+        <ng-container *ngIf="!passport.type">
+          <div class="upload-row">
+            <!-- Data Page -->
+            <div class="upload-zone half"
+                 (click)="dataPageInput.click()"
+                 (dragover)="onDragOver($event, i, 'dataPage')"
+                 (dragleave)="onDragLeave($event, i, 'dataPage')"
+                 (drop)="onDrop($event, i, 'dataPage')"
+                 [class.active]="activeDragSet === i && activeDragSide === 'dataPage'">
+              <input #dataPageInput type="file" 
+                     (change)="onImageSelected($event, i, 'dataPage')" 
+                     accept="image/*" 
+                     hidden>
+              <div class="zone-content">
+                <div class="chessboard-bg"></div>
+                <div class="upload-prompt">
+                  <span class="icon">📄</span>
+                  <span>Data Page</span>
+                  <small>Personal info & MRZ</small>
+                </div>
+              </div>
+            </div>
+
+            <!-- Photo Page -->
+            <div class="upload-zone half"
+                 (click)="photoPageInput.click()"
+                 (dragover)="onDragOver($event, i, 'photoPage')"
+                 (dragleave)="onDragLeave($event, i, 'photoPage')"
+                 (drop)="onDrop($event, i, 'photoPage')"
+                 [class.active]="activeDragSet === i && activeDragSide === 'photoPage'">
+              <input #photoPageInput type="file" 
+                     (change)="onImageSelected($event, i, 'photoPage')" 
+                     accept="image/*" 
+                     hidden>
+              <div class="zone-content">
+                <div class="chessboard-bg"></div>
+                <div class="upload-prompt">
+                  <span class="icon">📷</span>
+                  <span>Photo Page</span>
+                  <small>Passport photo & signature</small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </ng-container>
+
+        <!-- Images uploaded - show previews -->
+        <ng-container *ngIf="passport.type === 'images'">
+          <div class="upload-row">
+            <div class="upload-zone half has-file">
+              <img *ngIf="passport.dataPagePreview" [src]="passport.dataPagePreview" class="preview-img" alt="dataPage preview">
+              <div class="file-info" *ngIf="!passport.dataPagePreview">{{ passport.dataPageFile?.name }}</div>
+              <button class="remove-file" (click)="removeFile(i, 'dataPage')">✕</button>
+              <span class="side-label">DATA PAGE</span>
+            </div>
+            <div class="upload-zone half has-file">
+              <img *ngIf="passport.photoPagePreview" [src]="passport.photoPagePreview" class="preview-img" alt="photoPage preview">
+              <div class="file-info" *ngIf="!passport.photoPagePreview">{{ passport.photoPageFile?.name }}</div>
+              <button class="remove-file" (click)="removeFile(i, 'photoPage')">✕</button>
+              <span class="side-label">PHOTO PAGE</span>
+            </div>
+          </div>
+        </ng-container>
+      </ng-container>
+
+      <!-- File Mode: Single file upload -->
+      <ng-container *ngIf="uploadMode === 'file'">
+        <!-- No file yet -->
+        <ng-container *ngIf="!passport.type">
+          <div class="upload-section">
+            <div class="upload-zone full"
+                 (click)="fileInput.click()"
+                 (dragover)="onFileDragOver($event, i)"
+                 (dragleave)="onFileDragLeave($event, i)"
+                 (drop)="onFileDrop($event, i)"
+                 [class.active]="activeFileDrag === i">
+              <input #fileInput type="file" 
+                     (change)="onFileSelected($event, i)" 
+                     accept=".pdf,.jpg,.jpeg,.png,.tiff" 
+                     hidden>
+              <div class="zone-content">
+                <div class="chessboard-bg"></div>
+                <div class="upload-prompt">
+                  <span class="icon">📄</span>
+                  <span>Drag & Drop or Click to upload</span>
+                  <small>Supports: PDF, Images (JPG, PNG, TIFF)</small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </ng-container>
+
+        <!-- File uploaded - show preview -->
+        <ng-container *ngIf="passport.type === 'file'">
+          <div class="file-preview-section">
+            <div class="file-preview-card">
+              <div class="file-icon-large">📑</div>
+              <div class="file-details">
+                <div class="file-name">{{ passport.file?.name }}</div>
+                <div class="file-size">{{ passport.file?.size | fileSize }}</div>
+                <div class="file-status" [class.processing]="passport.status === 'processing'">
+                  {{ passport.status === 'processing' ? 'Processing...' : 'Ready for extraction' }}
+                </div>
+              </div>
+              <button class="remove-file-btn" (click)="removeFile(i, 'file')">✕</button>
+            </div>
+          </div>
+        </ng-container>
+      </ng-container>
+
+      <!-- Status indicator for both modes -->
+      <div class="passport-status" *ngIf="passport.type">
+        <span class="status-badge" [class.ready]="isPassportReady(passport)">
+          {{ isPassportReady(passport) ? '✅ Ready for extraction' : '⏳ Incomplete' }}
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Another Passport Button -->
+  <div class="add-more">
+    <button class="add-btn" (click)="addPassport()">
+      <span class="plus-icon">+</span> Add another passport
+    </button>
+  </div>
+
+  <!-- Export Button with loading state -->
+  <div class="export-section">
+    <button class="export-btn" [disabled]="!canExport() || isProcessing" (click)="extractData('none', false)">
+      <span class="export-icon" *ngIf="!isProcessing">⬇️</span>
+      <span class="spinner" *ngIf="isProcessing"></span>
+      {{ isProcessing ? 'Processing...' : 'Extract Data' }}
+    </button>
+  </div>
+</div>

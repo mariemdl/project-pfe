@@ -1,0 +1,23 @@
+@use '@angular/material' as mat;
+
+html {
+  height: 100%;
+  @include mat.theme(
+    (
+      color: (
+        primary: mat.$blue-palette,
+        tertiary: mat.$orange-palette,
+      ),
+      typography: 'Poppins, sans-serif',
+      density: 0,
+    )
+  );
+}
+
+body {
+  color-scheme: light;
+  background-color: #EFF6FF;
+  color: #1e293b;
+  margin: 0;
+  height: 100%;
+}

@@ -1,0 +1,47 @@
+# Dependencies
+node_modules/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+venv/
+env/
+.venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build outputs
+dist/
+build/
+*.egg-info/
+
+# Logs
+*.log
+logs.txt
+
+# Environment
+.env
+.env.local
+
+# Uploads (large files)
+uploads/batches/*/
+!uploads/batches/.gitkeep
+backend/uploads/
+backend/storage/
+
+# Claude Code memory
+.claude/
+
+# Docker
+storage/reports/
+storage/uploads/

@@ -1,0 +1,19 @@
+{
+  "validation": {
+    "is_type": true,
+    "confidence": 0.95
+  },
+  "pair_verification": {
+    "same_card": true,
+    "confidence": 0.98
+  },
+  "extraction": {
+    "fields": [
+      {"name": "cin_number", "value": "123456789", "confidence": 0.98},
+      {"name": "full_name", "value": "Jean Dupont", "confidence": 0.95},
+      {"name": "date_of_birth", "value": "15/03/1985", "confidence": 0.99},
+      {"name": "address", "value": "123 Rue de la Paix, Paris", "confidence": 0.85}
+    ],
+    "language": "fr"
+  }
+}

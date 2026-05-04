@@ -1,0 +1,474 @@
+<div class="system-admin-container">
+  <div class="header">
+    <h1>🖥️ System Administration</h1>
+    <div class="auto-refresh">
+      <label>
+        <input type="checkbox" [(ngModel)]="autoRefresh" (change)="toggleAutoRefresh()">
+        Auto-refresh (30s)
+      </label>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button [class.active]="activeTab === 'dashboard'" (click)="changeTab('dashboard')">📊 Dashboard</button>
+    <button [class.active]="activeTab === 'services'" (click)="changeTab('services')">🔧 Services</button>
+    <button [class.active]="activeTab === 'logs'" (click)="changeTab('logs')">📝 Logs & Errors</button>
+    <button [class.active]="activeTab === 'ai'" (click)="changeTab('ai')">🤖 AI Monitoring</button>
+    <button [class.active]="activeTab === 'database'" (click)="changeTab('database')">🗄️ Database</button>
+    <button [class.active]="activeTab === 'controls'" (click)="changeTab('controls')">🎮 Controls</button>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading">
+    <div class="spinner"></div>
+    <p>Loading system data...</p>
+  </div>
+
+  <div *ngIf="!loading">
+    <!-- DASHBOARD TAB -->
+    <div *ngIf="activeTab === 'dashboard'" class="tab-content">
+      <div class="health-section">
+        <div class="health-card" [class.healthy]="systemHealth?.status === 'healthy'" [class.degraded]="systemHealth?.status !== 'healthy'">
+          <h2>System Health</h2>
+          <div class="health-status">
+            <span class="status-icon">{{ systemHealth?.status === 'healthy' ? '✅' : '⚠️' }}</span>
+            <span class="status-text">{{ systemHealth?.status?.toUpperCase() }}</span>
+          </div>
+          <div class="health-time">Last check: {{ formatTimestamp(systemHealth?.timestamp) }}</div>
+        </div>
+
+        <div class="services-grid">
+          <div class="service-card" *ngFor="let service of systemHealth?.services | keyvalue">
+            <div class="service-name">{{ service.key | uppercase }}</div>
+            <div class="service-status">
+              <span class="status-badge" [class]="getStatusBadgeClass(service.value.status)">
+                {{ service.value.status }}
+              </span>
+            </div>
+            <div class="service-error" *ngIf="service.value.error">{{ service.value.error }}</div>
+          </div>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-card"><div class="stat-value">{{ systemHealth?.statistics?.active_users || 0 }}</div><div class="stat-label">Active Users</div></div>
+          <div class="stat-card"><div class="stat-value">{{ systemHealth?.statistics?.total_users || 0 }}</div><div class="stat-label">Total Users</div></div>
+          <div class="stat-card"><div class="stat-value">{{ systemHealth?.statistics?.error_rate_24h || 0 }}%</div><div class="stat-label">Error Rate (24h)</div></div>
+          <div class="stat-card"><div class="stat-value">{{ systemHealth?.statistics?.total_requests_24h || 0 }}</div><div class="stat-label">Total Requests (24h)</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SERVICES TAB -->
+    <div *ngIf="activeTab === 'services'" class="tab-content">
+      <div class="services-table">
+        <table>
+          <thead><tr><th>Service</th><th>Status</th><th>Last Check</th><th>Response Time</th><th>Error Count</th><th>Actions</th></tr></thead>
+          <tbody>
+            <tr *ngFor="let service of services">
+              <td><strong>{{ service.name | uppercase }}</strong></td>
+              <td><span class="status-badge" [class]="getStatusBadgeClass(service.status)">{{ service.status }}</span></td>
+              <td>{{ formatTimestamp(service.last_check) }}</td>
+              <td>{{ service.response_time_ms ? service.response_time_ms + 'ms' : 'N/A' }}</td>
+              <td>{{ service.error_count }}</td>
+              <td><button class="btn-sm" (click)="restartService(service.name)" *ngIf="service.name !== 'database'">🔄 Restart</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- LOGS TAB -->
+    <div *ngIf="activeTab === 'logs'" class="tab-content">
+      <div class="logs-filters">
+        <select [(ngModel)]="selectedLogLevel" (change)="applyLogFilters()" aria-label="select log level">
+          <option value="">All Levels</option>
+          <option value="INFO">INFO</option>
+          <option value="WARNING">WARNING</option>
+          <option value="ERROR">ERROR</option>
+          <option value="CRITICAL">CRITICAL</option>
+        </select>
+        <select [(ngModel)]="selectedLogSource" (change)="applyLogFilters()" aria-label="select log source">
+          <option value="">All Sources</option>
+          <option value="backend">Backend</option>
+          <option value="ai-service">AI Service</option>
+          <option value="database">Database</option>
+          <option value="system_admin">System Admin</option>
+        </select>
+        <select [(ngModel)]="logFilterHours" (change)="loadErrorLogs()" aria-label="log filter hours">
+          <option [value]="1">Last Hour</option>
+          <option [value]="24">Last 24 Hours</option>
+          <option [value]="168">Last 7 Days</option>
+        </select>
+        <button class="btn-secondary" (click)="resetLogFilters()">Reset Filters</button>
+      </div>
+
+      <div class="error-summary" *ngIf="errorLogs">
+        <h3>📊 Error Summary (Last {{ errorLogs.period_hours }} hours)</h3>
+        <div class="error-total">
+          Total Errors: 
+          <strong>{{ errorLogs.total_errors }}</strong>
+        </div>
+        <div class="error-by-source" *ngIf="errorLogs.by_source">
+          <div *ngFor="let source of errorLogs.by_source | keyvalue" class="error-source">
+            <span class="source-name">{{ source.key }}</span>
+            <span class="source-count">{{ source.value.length }} errors</span>
+          </div>
+        </div>
+        <div class="recent-errors">
+          <h4>Recent Errors</h4>
+          <div *ngFor="let err of errorLogs.recent_errors" class="error-item">
+            <span class="error-time">{{ formatTimestamp(err.timestamp) }}</span>
+            <span class="error-source-badge">{{ err.source }}</span>
+            <span class="error-message">{{ err.message }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="logs-table">
+        <h3>📜 System Logs</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Timestamp</th>
+              <th>Level</th>
+              <th>Source</th>
+              <th>Message</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let log of logs">
+              <td>{{ formatTimestamp(log.timestamp) }}</td>
+              <td>
+                <span class="level-badge" [class]="getLevelBadgeClass(log.level)">
+                  {{ log.level }}
+                </span>
+               </td>
+              <td>{{ log.source }}</td>
+              <td>{{ log.message }}</td>
+             </tr>
+            <tr *ngIf="logs.length === 0">
+              <td colspan="4" class="no-data">No logs found</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- AI MONITORING TAB -->
+    <div *ngIf="activeTab === 'ai'" class="tab-content">
+      <div class="ai-stats" *ngIf="aiStats">
+        <div class="stats-summary">
+          <div class="stat-card">
+            <div class="stat-value">{{ aiStats.total_calls || 0 }}</div>
+            <div class="stat-label">Total AI Calls</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">{{ aiStats.mock_vs_real.mock_percentage || 0 }}%</div>
+            <div class="stat-label">Mock Mode</div>
+          </div>
+        </div>
+        <div class="ai-breakdown">
+          <h3>📈 Calls by Type</h3>
+          <div class="type-stats" *ngFor="let type of aiStats.by_type">
+            <div class="type-header">
+              <span class="type-name">{{ type.type }}</span>
+              <span class="type-total">{{ type.total || 0 }} calls</span>
+            </div>
+            <div class="type-details">
+              <div class="success-rate">Success Rate: {{ type.success_rate || 0 }}%</div>
+              <div class="response-time">Avg Response: {{ type.avg_response_time_ms || 0 }}ms</div>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-success" [style.width.%]="type.success_rate || 0"></div>
+            </div>
+          </div>
+        </div>
+        <div class="mock-real-stats">
+          <h3>🎭 Mock vs Real AI</h3>
+          <div class="mock-real-chart">
+            <div class="mock-bar" [style.width.%]="aiStats.mock_vs_real.mock_percentage || 0">Mock: {{ aiStats.mock_vs_real.mock || 0 }}</div>
+            <div class="real-bar" [style.width.%]="100 - (aiStats.mock_vs_real.mock_percentage || 0)">Real: {{ aiStats.mock_vs_real.real || 0 }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DATABASE TAB - ENHANCED VERSION -->
+    <div *ngIf="activeTab === 'database'" class="tab-content">
+      <!-- Database Header Stats -->
+      <div class="db-header-stats" *ngIf="databaseStats">
+        <div class="db-connection-status" [class.connected]="databaseStats.connection_status === 'connected'"><div class="status-dot"></div><span>Connection: {{ databaseStats.connection_status | titlecase }}</span></div>
+        <div class="db-quick-stats">
+          <div class="quick-stat">
+            <span class="stat-icon">💾</span>
+            <span class="stat-value">{{ databaseStats.database_size_mb }} MB</span>
+            <span class="stat-label">Total Size</span>
+          </div>
+          <div class="quick-stat">
+            <span class="stat-icon">🔗</span>
+            <span class="stat-value">{{ databaseStats.active_connections }}</span>
+            <span class="stat-label">Connections</span>
+          </div>
+          <div class="quick-stat">
+            <span class="stat-icon">📊</span>
+            <span class="stat-value">{{ databaseStats.total_tables }}</span>
+            <span class="stat-label">Tables</span>
+          </div>
+          <div class="quick-stat">
+            <span class="stat-icon">⚡</span>
+            <span class="stat-value">{{ databaseStats.cache_hit_ratio }}%</span>
+            <span class="stat-label">Cache Hit</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Inner Tabs -->
+      <div class="db-inner-tabs">
+        <button [class.active]="dbSubTab === 'tables'" (click)="dbSubTab = 'tables'">📋 Tables & Sizes</button>
+        <button [class.active]="dbSubTab === 'stats'" (click)="dbSubTab = 'stats'">📈 Database Stats</button>
+        <button [class.active]="dbSubTab === 'connections'" (click)="dbSubTab = 'connections'">🔌 Active Connections</button>
+        <button [class.active]="dbSubTab === 'query'" (click)="dbSubTab = 'query'">⌨️ SQL Query</button>
+      </div>
+
+      <!-- TABLES SUB-TAB -->
+      <div *ngIf="dbSubTab === 'tables'" class="db-subtab">
+        <div class="section-header">
+          <h3>📊 All Database Tables</h3>
+          <button class="refresh-btn" (click)="refreshDatabaseData()" [disabled]="dbTablesLoading">🔄 {{ dbTablesLoading ? 'Loading...' : 'Refresh' }}</button>
+        </div>
+        <div *ngIf="dbTablesLoading" class="loading-state">
+          <div class="spinner-small"></div>
+          <p>Loading tables...</p>
+        </div>
+        <div *ngIf="!dbTablesLoading && databaseTables.length > 0" class="tables-grid">
+          <div *ngFor="let table of databaseTables" class="table-card">
+            <div class="table-header">
+              <span class="table-icon">{{ getTableIconFromName(table.table_name) }}</span>
+              <span class="table-name">{{ table.table_name }}</span>
+            </div>
+            <div class="table-stats">
+              <div class="stat-row">
+                <span class="stat-title">Rows:</span>
+                <span class="stat-number">{{ table.row_count | number }}</span>
+              </div>
+              <div class="stat-row">
+                <span class="stat-title">Size:</span>
+                <span class="stat-size" [style.color]="getSizeColor(table.size_mb)">{{ table.size_mb }} MB</span>
+              </div>
+              <div class="stat-row">
+                <span class="stat-title">Columns:</span>
+                <span>{{ table.column_count }}</span>
+              </div>
+              <div class="stat-row" *ngIf="table.last_updated">
+                <span class="stat-title">Updated:</span>
+                <span class="stat-date">{{ formatTimestamp(table.last_updated) }}</span>
+              </div>
+            </div>
+            <div class="table-actions">
+              <button class="action-btn details" (click)="loadTableDetails(table.table_name)">📄 Details</button>
+              <button class="action-btn preview" (click)="loadTablePreview(table.table_name)">👁️ Preview</button>
+            </div>
+          </div>
+        </div>
+        <div *ngIf="!dbTablesLoading && databaseTables.length === 0" class="empty-state">
+          <p>📭 No tables found in database</p>
+        </div>
+
+        <!-- Table Details Modal -->
+        <div *ngIf="showTableDetails && databaseTableDetails" class="modal-overlay">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h3>📄 Table: {{ databaseTableDetails.table_name }}</h3>
+              <button class="close-btn" (click)="showTableDetails = false; showTablePreview = false">✖</button>
+            </div>
+            <div class="modal-body">
+              <h4>Columns ({{ databaseTableDetails.total_columns }})</h4>
+              <div class="columns-grid">
+                <div *ngFor="let col of databaseTableDetails.columns" class="column-card">
+                  <div class="col-name">{{ col.name }}
+                    <span *ngIf="col.primary_key" class="pk-badge">PK</span>
+                  </div>
+                  <div class="col-type">{{ col.type }}</div>
+                  <div class="col-meta">
+                    <span *ngIf="col.nullable">nullable</span>
+                    <span *ngIf="!col.nullable">required</span>
+                  </div>
+                </div>
+              </div>
+              <h4 *ngIf="databaseTableDetails.indexes.length">Indexes ({{ databaseTableDetails.total_indexes }})</h4>
+              <div *ngFor="let idx of databaseTableDetails.indexes" class="index-item">
+                <code>{{ idx.name }}</code>
+                <small>{{ idx.definition }}</small>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Table Preview Modal -->
+        <div *ngIf="showTablePreview && tablePreviewRows.length > 0" class="modal-overlay">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h3>👁️ Preview: {{ selectedTableForDetails }}</h3>
+              <button class="close-btn" (click)="showTablePreview = false; showTableDetails = false">✖</button>
+            </div>
+            <div class="modal-body preview-modal-body">
+              <div class="preview-table-container">
+                <table class="preview-table">
+                  <thead>
+                    <tr>
+                      <th *ngFor="let col of tablePreviewColumns">{{ col }}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let row of tablePreviewRows">
+                      <td *ngFor="let col of tablePreviewColumns">{{ row[col] }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <p class="preview-note">Showing {{ tablePreviewRows.length }} rows</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STATS SUB-TAB -->
+      <div *ngIf="dbSubTab === 'stats'" class="db-subtab">
+        <div *ngIf="dbStatsLoading" class="loading-state">
+          <div class="spinner-small"></div>
+          <p>Loading statistics...</p>
+        </div>
+        <div *ngIf="!dbStatsLoading && databaseStats" class="stats-dashboard">
+          <div class="stats-card">
+            <h4>📈 Transaction Statistics</h4>
+            <div class="transaction-stats">
+              <div class="tx-item committed">
+                <span class="tx-label">Committed</span>
+                <span class="tx-value">{{ databaseStats.transactions?.committed | number }}</span>
+              </div>
+              <div class="tx-item rolledback">
+                <span class="tx-label">Rolled Back</span>
+                <span class="tx-value">{{ databaseStats.transactions?.rolled_back | number }}</span>
+              </div>
+              <div class="tx-item total">
+                <span class="tx-label">Total</span>
+                <span class="tx-value">{{ databaseStats.transactions?.total | number }}</span>
+              </div>
+            </div>
+          </div>
+          <div class="stats-card">
+            <h4>🛠️ Maintenance</h4>
+            <div class="maintenance-stats">
+              <div class="maint-item">
+                <span>Last ANALYZE:</span>
+                <span>{{ formatTimestamp(databaseStats.last_analyze) }}</span>
+              </div>
+              <div class="maint-item">
+                <span>Last VACUUM:</span>
+                <span>{{ formatTimestamp(databaseStats.last_vacuum) }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CONNECTIONS SUB-TAB -->
+      <div *ngIf="dbSubTab === 'connections'" class="db-subtab">
+        <div class="section-header">
+          <h3>🔌 Active Database Connections ({{ databaseConnections.length }})</h3>
+          <button class="refresh-btn" (click)="loadDatabaseConnections()">🔄 Refresh</button>
+        </div>
+        <div *ngIf="dbConnectionsLoading" class="loading-state">
+          <div class="spinner-small"></div>
+          <p>Loading connections...</p>
+        </div>
+        <div *ngIf="!dbConnectionsLoading && databaseConnections.length === 0" class="empty-state">
+          <p>No active connections found</p>
+        </div>
+        <div *ngIf="!dbConnectionsLoading && databaseConnections.length > 0" class="connections-table-container">
+          <table class="connections-table">
+            <thead>
+              <tr>
+                <th>PID</th>
+                <th>Username</th>
+                <th>Application</th>
+                <th>Client Address</th>
+                <th>State</th>
+                <th>Query Preview</th>
+                <th>Started</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let conn of databaseConnections">
+                <td>{{ conn.pid }}</td>
+                <td>{{ conn.username }}</td>
+                <td>{{ conn.application || '-' }}</td>
+                <td>{{ conn.client_address }}</td>
+                <td>
+                  <span class="state-badge" [class.active]="conn.state === 'active'">{{ conn.state }}</span>
+                </td>
+                <td class="query-preview">{{ conn.query_preview || '-' }}</td>
+                <td>{{ formatTimestamp(conn.query_start) }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- QUERY SUB-TAB -->
+      <div *ngIf="dbSubTab === 'query'" class="db-subtab">
+        <div class="query-section">
+          <h3>⌨️ Execute SQL Query (SELECT only)</h3>
+          <div class="query-editor">
+            <textarea [(ngModel)]="dbQuery" placeholder="SELECT * FROM users LIMIT 10;" rows="5" class="query-input"></textarea>
+            <button class="execute-btn" (click)="executeDatabaseQuery()" [disabled]="dbQueryLoading">{{ dbQueryLoading ? 'Executing...' : '▶ Execute Query' }}</button>
+          </div>
+          <div *ngIf="dbQueryResult" class="query-result">
+            <div class="result-header">
+              <span>✅ Query executed successfully</span>
+              <span class="row-count">{{ dbQueryResult.row_count }} rows returned</span>
+            </div>
+            <div class="result-table-container" *ngIf="dbQueryResult.rows?.length > 0">
+              <table class="result-table">
+                <thead>
+                  <tr>
+                    <th *ngFor="let col of dbQueryResult.columns">{{ col }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let row of dbQueryResult.rows.slice(0, 50)">
+                    <td *ngFor="let col of dbQueryResult.columns">{{ row[col] }}</td>
+                  </tr>
+                </tbody>
+              </table>
+              <p *ngIf="dbQueryResult.rows.length > 50" class="truncate-note">Showing first 50 of {{ dbQueryResult.row_count }} rows</p>
+            </div>
+            <div *ngIf="dbQueryResult.error" class="result-error">❌ {{ dbQueryResult.error }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONTROLS TAB -->
+    <div *ngIf="activeTab === 'controls'" class="tab-content">
+      <div class="controls-section">
+        <h3>🎮 System Controls</h3>
+        <div class="control-card">
+          <h4>🤖 AI Service Configuration</h4>
+          <p>Current Mode: <strong>{{ (aiStats?.mock_vs_real?.mock_percentage || 0) > 50 ? 'Mock' : 'Real' }}</strong></p>
+          <button class="btn-warning" (click)="toggleMockAI()">Toggle Mock AI Mode</button>
+          <small class="control-note">⚠️ Changes require backend restart to take effect</small>
+        </div>
+        <div class="control-card">
+          <h4>🔄 Service Restarts</h4>
+          <div class="restart-buttons">
+            <button (click)="restartService('backend')">Restart Backend</button>
+            <button (click)="restartService('ai_service')">Restart AI Service</button>
+            <button (click)="restartService('selenium')">Restart Selenium</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

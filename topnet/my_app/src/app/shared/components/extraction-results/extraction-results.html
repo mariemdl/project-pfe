@@ -1,0 +1,124 @@
+<div class="results-container" *ngIf="!loading && !error && batch">
+  <div class="header">
+    <h1>Extraction Results</h1>
+    <p class="batch-info">Batch #{{ batch?.batch_id }} • {{ batch?.status }}</p>
+    <div class="header-buttons">
+      <!-- ONLY SHOW TRANSLATE BUTTON IF NO AUTO-TRANSLATION WAS APPLIED -->
+      <button 
+        *ngIf="!autoTranslateLanguage" 
+        class="btn-translate" 
+        (click)="showTranslationDialog()" 
+        [disabled]="isTranslating">
+        <span class="btn-icon">🌐</span> 
+        {{ isTranslating ? 'Translating...' : 'Translate' }}
+      </button>
+      
+      <!-- SHOW TRANSLATION STATUS IF AUTO-TRANSLATED -->
+      <div class="translation-badge" *ngIf="autoTranslateLanguage && targetLanguage">
+        <span class="btn-icon">✅</span> 
+        Translated to {{ targetLanguage }}
+      </div>
+      
+      <button class="back-btn" (click)="onNewExtraction()">← New Extraction</button>
+    </div>
+  </div>
+
+  <div *ngFor="let doc of batch.documents; let i = index" class="document-result">
+    <h2 class="document-title">
+      <span class="document-icon">{{ getDocumentIcon(batch.document_type) }}</span>
+      {{ getDocumentTitle(batch.document_type) }} #{{ doc['sequence_number'] + 1 }}
+    </h2>
+    
+    <div class="tables-container">
+      <div class="table-wrapper original">
+        <h3 class="table-title">
+          <span class="lang-indicator">Extracted Data</span>
+          <span class="confidence-badge">OCR Confidence</span>
+        </h3>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Field</th>
+              <th>Value</th>
+              <th>Confidence</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let field of doc.fields">
+              <td class="field-name">{{ formatFieldName(field.name) }}</td>
+              <td class="field-value">{{ field.value }}</td>
+              <td class="field-confidence">
+                <div class="confidence-bar">
+                  <div class="confidence-fill" [style.width.%]="field.confidence * 100"></div>
+                  <span>{{ field.confidence * 100 | number:'1.0-0' }}%</span>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="table-wrapper translated" *ngIf="doc.translated_fields">
+        <h3 class="table-title">Translated ({{ targetLanguage }})</h3>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Field</th>
+              <th>Value</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let field of doc.translated_fields">
+              <td class="field-name">{{ formatFieldName(field.name) }}</td>
+              <td class="field-value">{{ field.value }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    
+    <!-- MAP SECTION with #mapContainer template reference -->
+    <div class="map-section" *ngIf="hasAddress(doc)">
+      <div class="map-header">
+        <h3>📍 Location Map</h3>
+        <span class="address-tag">Detected Address</span>
+      </div>
+
+      <div 
+        #mapContainer
+        class="map-container"
+        style="width: 100%; height: 380px; border-radius: 12px; overflow: hidden; background: #f0f0f0; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+        <div class="map-loading" style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%;">
+          <div class="spinner-small"></div>
+          <p style="margin-top: 10px; color: #666;">Loading map...</p>
+        </div>
+      </div>
+      
+      <p class="address-caption">
+        <strong>Address:</strong> {{ getAddressField(doc) }}
+      </p>
+    </div>
+  </div>
+
+  <div class="action-buttons">
+    <button class="btn btn-primary" (click)="onDownloadPdf()">
+      <span class="btn-icon">⬇️</span> Download PDF Report
+    </button>
+    <button class="btn btn-secondary" (click)="onNewExtraction()">
+      <span class="btn-icon">🔄</span> New Extraction
+    </button>
+  </div>
+</div>
+
+<div class="loading-container" *ngIf="loading">
+  <div class="spinner"></div>
+  <p>Loading extraction results...</p>
+</div>
+
+<div class="error-container" *ngIf="error">
+  <div class="error-icon">❌</div>
+  <h2>Error Loading Results</h2>
+  <p>{{ error }}</p>
+  <button class="btn btn-primary" (click)="onRetry()">Retry</button>
+  <button class="btn btn-secondary" (click)="onNewExtraction()">New Extraction</button>
+</div>
