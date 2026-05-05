@@ -191,12 +191,10 @@ async def create_user(
         alphabet = string.ascii_letters + string.digits
         password = ''.join(secrets.choice(alphabet) for _ in range(12))
     
-    # Determine role based on permissions
+    # Determine role — use explicit flag sent by the frontend
     permission_ids = data.get("permission_ids", [])
-    has_view_subordinates = 5 in permission_ids  # Assuming view_subordinates has ID 5
-    
-    role = "manager" if has_view_subordinates else "viewer"
-    
+    role = "manager" if data.get("is_manager", False) else "viewer"
+
     # Create user
     new_user = models.User(
         email=data.get("email"),
@@ -208,10 +206,10 @@ async def create_user(
         created_by=current_user.id,
         manager_id=data.get("manager_id") if role == "manager" else None
     )
-    
+
     db.add(new_user)
     db.flush()
-    
+
     # Assign permissions
     for perm_id in permission_ids:
         perm = db.query(models.Permission).filter(models.Permission.id == perm_id).first()
@@ -221,16 +219,15 @@ async def create_user(
                 permission_id=perm_id,
                 granted_by=current_user.id
             ))
-    
-    # Assign subordinates if this is a manager
+
+    # Assign subordinates — always process if any IDs provided and user is a manager
     subordinate_ids = data.get("subordinate_ids", [])
     if subordinate_ids and role == "manager":
         for sub_id in subordinate_ids:
             subordinate = db.query(models.User).filter(models.User.id == sub_id).first()
             if subordinate:
                 subordinate.manager_id = new_user.id
-        db.commit()
-    
+
     db.commit()
     
     # Send email
@@ -419,12 +416,10 @@ async def update_user_full(
     
     # Update permissions
     if "permission_ids" in user_update:
-        # Remove existing permissions
         db.query(models.UserPermission).filter(
             models.UserPermission.user_id == user_id
         ).delete()
-        
-        # Add new permissions
+
         for perm_id in user_update["permission_ids"]:
             perm = db.query(models.Permission).filter(models.Permission.id == perm_id).first()
             if perm:
@@ -433,7 +428,19 @@ async def update_user_full(
                     permission_id=perm_id,
                     granted_by=current_user.id
                 ))
-    
+
+    # Update subordinates — clear old ones and set new ones
+    if "subordinate_ids" in user_update:
+        # Remove any users that currently report to this manager
+        db.query(models.User).filter(
+            models.User.manager_id == user_id
+        ).update({"manager_id": None})
+
+        for sub_id in user_update["subordinate_ids"]:
+            sub = db.query(models.User).filter(models.User.id == sub_id).first()
+            if sub:
+                sub.manager_id = user_id
+
     db.commit()
     
     return {

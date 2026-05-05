@@ -4,43 +4,59 @@
     <p class="info">View-only list of team members reporting to you</p>
   </div>
 
-  <div class="stats" *ngIf="subordinates.length > 0">
-    Total: {{ subordinates.length }} subordinate(s)
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-state">
+    <div class="spinner">⏳</div>
+    <p>Loading subordinates...</p>
   </div>
 
-  <div class="table-responsive">
-    <table class="subordinates-table">
-      <thead>
-        <tr>
-          <th>Full Name</th>
-          <th>Username</th>
-          <th>Email</th>
-          <th>Role</th>
-          <th>Member Since</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let sub of subordinates">
-          <td>{{ sub.full_name || '-' }}</td>
-          <td>{{ sub.username }}</td>
-          <td>{{ sub.email }}</td>
-          <td>
-            <span class="role-badge" [class]="sub.role">
-              {{ sub.role }}
-            </span>
-          </td>
-          <td>{{ formatDate(sub.created_at) }}</td>
-        </tr>
-        <tr *ngIf="subordinates.length === 0">
-          <td colspan="5" class="no-data">
-            <div class="empty-state">
-              <span class="empty-icon">👥</span>
-              <p>No subordinates assigned yet</p>
-              <small>You don't have any team members reporting to you</small>
-            </div>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+  <!-- Error State -->
+  <div *ngIf="error && !loading" class="error-state">
+    <div class="error-icon">⚠️</div>
+    <p>{{ error }}</p>
+    <button class="btn-retry" (click)="loadSubordinates()">Retry</button>
+  </div>
+
+  <!-- Success State -->
+  <div *ngIf="!loading && !error" class="success-state">
+    <div class="stats" *ngIf="subordinates.length > 0">
+      Total: {{ subordinates.length }} subordinate(s)
+    </div>
+
+    <div class="table-responsive">
+      <table class="subordinates-table">
+        <thead>
+          <tr>
+            <th>Full Name</th>
+            <th>Username</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Member Since</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let sub of subordinates">
+            <td>{{ sub.full_name || '-' }}</td>
+            <td>{{ sub.username }}</td>
+            <td>{{ sub.email }}</td>
+            <td>
+              <span class="role-badge" [class]="sub.role">
+                {{ sub.role }}
+              </span>
+            </td>
+            <td>{{ formatDate(sub.created_at) }}</td>
+          </tr>
+          <tr *ngIf="subordinates.length === 0">
+            <td colspan="5" class="no-data">
+              <div class="empty-state">
+                <span class="empty-icon">👥</span>
+                <p>No subordinates assigned yet</p>
+                <small>You don't have any team members reporting to you</small>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 </div>

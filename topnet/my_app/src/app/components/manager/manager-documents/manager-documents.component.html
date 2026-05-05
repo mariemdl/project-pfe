@@ -4,16 +4,23 @@
         <p>Documents from you and your subordinates</p>
     </div>
 
+    <!-- Subordinates Loading Error -->
+    <div *ngIf="errorSubordinates && !loadingSubordinates" class="alert alert-error">
+        <div>⚠️ Failed to load team members: {{ errorSubordinates }}</div>
+        <button class="btn-small" (click)="loadSubordinates()">Retry</button>
+    </div>
+
     <!-- Filters -->
-    <div class="filters-card">
+    <div class="filters-card" *ngIf="!loadingSubordinates || !loadingDocuments">
         <div class="filter-row">
           <div class="filter-group">
             <label>👤 Team Member</label>
-            <select [(ngModel)]="filters.userId" (change)="applyFilters()" aria-label="user filter">
-              <option [value]="null">All Team Members</option>
+            <select [(ngModel)]="filters.userId" (change)="applyFilters()" aria-label="user filter" [disabled]="loadingSubordinates">
+              <option [value]="null" *ngIf="!loadingSubordinates">All Team Members</option>
               <option *ngFor="let sub of subordinates" [value]="sub.id">
                 {{ sub.full_name || sub.username }}
               </option>
+              <option *ngIf="loadingSubordinates" disabled>(Loading team members...)</option>
             </select>
           </div>
 
@@ -24,6 +31,7 @@
               [(ngModel)]="filters.search" 
               (input)="applyFilters()" 
               placeholder="Search by filename..."
+              [disabled]="loadingDocuments"
             />
           </div>
         </div>
@@ -31,7 +39,7 @@
         <div class="filter-row">
           <div class="filter-group">
             <label>📅 Quick Filter</label>
-            <select [(ngModel)]="filters.period" (change)="onPeriodChange()" aria-label="perio filter">
+            <select [(ngModel)]="filters.period" (change)="onPeriodChange()" aria-label="perio filter" [disabled]="loadingDocuments">
               <option [value]="null">All Time</option>
               <option value="day">Last 24 Hours</option>
               <option value="week">Last 7 Days</option>
@@ -43,25 +51,41 @@
 
           <div class="filter-group" *ngIf="filters.period === 'custom'">
             <label>📅 From Date</label>
-            <input type="date" [(ngModel)]="filters.dateFrom" (change)="applyFilters()" />
+            <input type="date" [(ngModel)]="filters.dateFrom" (change)="applyFilters()" [disabled]="loadingDocuments" />
           </div>
 
           <div class="filter-group" *ngIf="filters.period === 'custom'">
             <label>📅 To Date</label>
-            <input type="date" [(ngModel)]="filters.dateTo" (change)="applyFilters()" />
+            <input type="date" [(ngModel)]="filters.dateTo" (change)="applyFilters()" [disabled]="loadingDocuments" />
           </div>
         </div>
 
         <div class="filter-actions">
-          <button class="btn-clear" (click)="clearFilters()">Clear Filters</button>
-          <span class="result-count" *ngIf="totalCount !== null">
+          <button class="btn-clear" (click)="clearFilters()" [disabled]="loadingDocuments">Clear Filters</button>
+          <span class="result-count" *ngIf="totalCount !== null && !loadingDocuments">
             Found {{ totalCount }} document(s)
+          </span>
+          <span class="result-count" *ngIf="loadingDocuments">
+            Loading documents...
           </span>
         </div>
     </div>
 
+    <!-- Documents Loading State -->
+    <div *ngIf="loadingDocuments" class="loading-state">
+        <div class="spinner">⏳</div>
+        <p>Loading documents...</p>
+    </div>
+
+    <!-- Documents Error State -->
+    <div *ngIf="errorDocuments && !loadingDocuments" class="error-state">
+        <div class="error-icon">⚠️</div>
+        <p>{{ errorDocuments }}</p>
+        <button class="btn-retry" (click)="loadDocuments()">Retry</button>
+    </div>
+
     <!-- Documents Table -->
-    <div class="table-responsive">
+    <div class="table-responsive" *ngIf="!loadingDocuments && !errorDocuments">
         <table class="documents-table">
             <thead>
                 <tr>
@@ -103,7 +127,7 @@
     </div>
 
     <!-- Pagination -->
-    <div class="pagination" *ngIf="totalCount > limit">
+    <div class="pagination" *ngIf="totalCount > limit && !loadingDocuments && !errorDocuments">
         <button (click)="prevPage()" [disabled]="skip === 0">← Previous</button>
         <span>Page {{ page }} of {{ totalPages }}</span>
         <button (click)="nextPage()" [disabled]="skip + limit >= totalCount">Next →</button>

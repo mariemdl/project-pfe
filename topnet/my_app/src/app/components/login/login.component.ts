@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -20,7 +20,8 @@ export class LoginComponent implements OnInit{
   constructor(
     private authService: AuthService,
     public router: Router,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
@@ -33,8 +34,10 @@ export class LoginComponent implements OnInit{
   redirectBasedOnRole() {
     const user = this.authService.getCurrentUser();
     const role = user?.role;
-    
-    if (role === 'profile_admin') {
+
+    if (role === 'admin') {
+      this.router.navigate(['/admin/document-management']);
+    } else if (role === 'profile_admin') {
       this.router.navigate(['/admin/profile-management']);
     } else if (role === 'system_admin') {
       this.router.navigate(['/system-admin']);
@@ -79,7 +82,9 @@ export class LoginComponent implements OnInit{
           const role = user?.role;
           
           // Redirect based on role
-          if (role === 'profile_admin') {
+          if (role === 'admin') {
+            this.router.navigate(['/admin/document-management']);
+          } else if (role === 'profile_admin') {
             this.router.navigate(['/admin/profile-management']);
           } else if (role === 'system_admin') {
             this.router.navigate(['/system-admin']);
@@ -96,7 +101,11 @@ export class LoginComponent implements OnInit{
         
         // Gestion des différents types d'erreurs
         if (err.status === 401) {
-          this.error = '❌ Email ou mot de passe incorrect. Veuillez réessayer.';
+          if (err.error?.detail?.toLowerCase().includes('inactive')) {
+            this.error = '❌ Your account has been deactivated. Please contact an administrator.';
+          } else {
+            this.error = '❌ Email ou mot de passe incorrect. Veuillez réessayer.';
+          }
         } 
         else if (err.status === 404) {
           this.error = '❌ Ce compte n\'existe pas. Veuillez vérifier vos identifiants.';
@@ -113,8 +122,9 @@ export class LoginComponent implements OnInit{
         else {
           this.error = '❌ Une erreur est survenue. Veuillez réessayer plus tard.';
         }
-        
+
         this.loading = false;
+        this.cdr.detectChanges();
       }
     });
   }

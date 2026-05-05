@@ -26,7 +26,7 @@ from .selenium_map import SeleniumMapGenerator
 from .password_reset import PasswordResetService
 from .auth import send_credentials_email_background, send_password_reset_email_background
 
-from .routes import admin, system_admin 
+from .routes import admin, system_admin, manager
 
 from PIL import Image
 import pytesseract
@@ -70,6 +70,7 @@ selenium_map = SeleniumMapGenerator(selenium_host="selenium", selenium_port=4444
 app.include_router(dashboard.router)
 app.include_router(admin.router)
 app.include_router(system_admin.router)
+app.include_router(manager.router)
 
 
 # ========== Pydantic Models for Auth ==========
@@ -125,17 +126,26 @@ async def register(user_data: UserCreate, db: Session = Depends(get_db)):
     ).first()
     if existing:
         raise HTTPException(400, "User with this email or username already exists")
-    
+
+    # Validate role — only non-privileged roles allowed via self-registration
+    allowed_self_register_roles = {models.UserRole.VIEWER, models.UserRole.OPERATOR, models.UserRole.MANAGER}
+    try:
+        requested_role = models.UserRole(user_data.role)
+    except ValueError:
+        raise HTTPException(400, f"Invalid role '{user_data.role}'")
+    if requested_role not in allowed_self_register_roles:
+        raise HTTPException(403, "Cannot self-register with a privileged role")
+
     # Hash password
     hashed_password = auth.AuthService.get_password_hash(user_data.password)
-    
+
     # Create user
     user = models.User(
         email=user_data.email,
         username=user_data.username,
         hashed_password=hashed_password,
         full_name=user_data.full_name,
-        role=user_data.role,
+        role=requested_role,
         manager_id=user_data.manager_id
     )
     db.add(user)

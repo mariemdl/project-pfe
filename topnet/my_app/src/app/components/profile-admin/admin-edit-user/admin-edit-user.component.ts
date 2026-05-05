@@ -1,9 +1,10 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../../services/auth.service';
+import { environment } from '../../../environments/environment';
 
 interface User {
   id: number;
@@ -33,6 +34,7 @@ export class AdminEditUserComponent implements OnInit {
   user: User | null = null;
   permissions: Permission[] = [];
   availableManagers: any[] = [];
+  allActiveUsers: any[] = [];
   loading = false;
   error = '';
   successMessage = '';
@@ -46,21 +48,24 @@ export class AdminEditUserComponent implements OnInit {
     password: '',
     confirmPassword: '',
     permission_ids: [] as number[],
-    manager_id: null as number | null
+    manager_id: null as number | null,
+    subordinate_ids: [] as number[]
   };
 
-  private apiUrl = 'http://localhost:8000/api/admin';
+  private apiUrl = `${environment.apiUrl}/api/admin`;
 
   constructor(
     private http: HttpClient,
     private route: ActivatedRoute,
     private router: Router,
-    private authService: AuthService
+    private authService: AuthService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
     this.loadPermissions();
     this.loadAvailableManagers();
+    this.loadAllActiveUsers();
     this.loadUser();
   }
 
@@ -68,27 +73,50 @@ export class AdminEditUserComponent implements OnInit {
     this.http.get<Permission[]>(`${this.apiUrl}/permissions`).subscribe({
       next: (data) => {
         this.permissions = data;
+        this.cdr.detectChanges();
       },
-      error: (err) => console.error('Error loading permissions:', err)
+      error: (err) => {
+        console.error('Error loading permissions:', err);
+        this.cdr.detectChanges();
+      }
     });
   }
 
   loadAvailableManagers() {
     this.http.get<any[]>(`${this.apiUrl}/available-managers`).subscribe({
-      next: (data) => {
+      next: (data) => { 
         this.availableManagers = data;
+        this.cdr.detectChanges();
       },
-      error: (err) => console.error('Error loading managers:', err)
+      error: (err) => {
+        console.error('Error loading managers:', err);
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  loadAllActiveUsers() {
+    this.http.get<any[]>(`${this.apiUrl}/users/active`).subscribe({
+      next: (data) => { 
+        this.allActiveUsers = data;
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        console.error('Error loading active users:', err);
+        this.cdr.detectChanges();
+      }
     });
   }
 
   loadUser() {
     this.loading = true;
+    this.cdr.detectChanges();
     const userId = this.route.snapshot.paramMap.get('id');
     
     if (!userId) {
       this.error = 'No user ID provided';
       this.loading = false;
+      this.cdr.detectChanges();
       return;
     }
 
@@ -104,14 +132,17 @@ export class AdminEditUserComponent implements OnInit {
           password: '',
           confirmPassword: '',
           permission_ids: data.permissions || [],
-          manager_id: data.manager_id || null
+          manager_id: data.manager_id || null,
+          subordinate_ids: (data.subordinates || []).map((s: any) => s.id)
         };
         this.loading = false;
+        this.cdr.detectChanges();
       },
       error: (err) => {
         console.error('Error loading user:', err);
         this.error = 'Failed to load user';
         this.loading = false;
+        this.cdr.detectChanges();
       }
     });
   }
@@ -140,6 +171,19 @@ export class AdminEditUserComponent implements OnInit {
     return this.editData.permission_ids.includes(permId);
   }
 
+  toggleSubordinate(userId: number) {
+    const index = this.editData.subordinate_ids.indexOf(userId);
+    if (index === -1) {
+      this.editData.subordinate_ids.push(userId);
+    } else {
+      this.editData.subordinate_ids.splice(index, 1);
+    }
+  }
+
+  isSubordinateSelected(userId: number): boolean {
+    return this.editData.subordinate_ids.includes(userId);
+  }
+
   saveUser() {
     // Validation
     if (this.editData.password && this.editData.password !== this.editData.confirmPassword) {
@@ -155,6 +199,7 @@ export class AdminEditUserComponent implements OnInit {
     this.loading = true;
     this.error = '';
     this.successMessage = '';
+    this.cdr.detectChanges();
 
     const updateData: any = {
       username: this.editData.username,
@@ -163,7 +208,8 @@ export class AdminEditUserComponent implements OnInit {
       role: this.editData.role,
       is_active: this.editData.is_active,
       permission_ids: this.editData.permission_ids,
-      manager_id: this.editData.manager_id
+      manager_id: this.editData.manager_id,
+      subordinate_ids: this.editData.role === 'manager' ? this.editData.subordinate_ids : undefined
     };
 
     if (this.editData.password) {
@@ -174,6 +220,7 @@ export class AdminEditUserComponent implements OnInit {
       next: () => {
         this.loading = false;
         this.successMessage = 'User updated successfully!';
+        this.cdr.detectChanges();
         
         setTimeout(() => {
           this.router.navigate(['/admin/profile-management']);
@@ -182,6 +229,7 @@ export class AdminEditUserComponent implements OnInit {
       error: (err) => {
         this.loading = false;
         this.error = err.error?.detail || 'Failed to update user';
+        this.cdr.detectChanges();
       }
     });
   }

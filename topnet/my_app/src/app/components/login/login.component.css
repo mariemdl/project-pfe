@@ -17,20 +17,6 @@
   justify-content: center;
 }
 
-/* Left branding panel */
-.login-container::before {
-  content: '';
-  flex: 1;
-  background: linear-gradient(160deg, #1E3A8A 0%, #2563EB 60%, #1d4ed8 100%);
-  display: none;
-}
-
-@media (min-width: 900px) {
-  .login-container::before {
-    display: block;
-  }
-}
-
 /* Right form panel */
 .login-card {
   width: 100%;
@@ -40,19 +26,6 @@
   border-radius: 20px;
   box-shadow: 0 8px 40px rgba(30, 58, 138, 0.13);
   padding: 3rem 2.5rem;
-}
-
-@media (min-width: 900px) {
-  .login-container {
-    align-items: center;
-    justify-content: center;
-    gap: 4rem;
-    padding: 2rem;
-  }
-
-  .login-card {
-    margin: 0;
-  }
 }
 
 .login-header {

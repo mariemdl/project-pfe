@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 from typing import List, Optional
 from app.database import get_db
 from app.models import Batch, Document
+from app import auth
 from pydantic import BaseModel
 
 router = APIRouter(prefix="/api", tags=["dashboard"])
@@ -39,65 +40,79 @@ class DailyStats(BaseModel):
     avg_time: float
 
 @router.get("/dashboard/stats", response_model=DashboardStats)
-async def get_dashboard_stats(db: Session = Depends(get_db)):
-    """Get overall dashboard statistics"""
-    
-    # Total batches and documents
-    total_batches = db.query(Batch).count()
-    total_documents = db.query(Document).count()
-    
-    # Success rate (completed without errors)
-    successful_batches = db.query(Batch).filter(Batch.status == 'completed').count()
+async def get_dashboard_stats(
+    db: Session = Depends(get_db),
+    current_user = Depends(auth.get_current_user)
+):
+    """Get dashboard statistics — admin roles see all, regular users see only their own"""
+    is_admin = current_user.role in ("admin", "profile_admin", "system_admin")
+
+    def base_batch_query():
+        q = db.query(Batch)
+        if not is_admin:
+            q = q.filter(Batch.user_id == current_user.id)
+        return q
+
+    total_batches = base_batch_query().count()
+
+    # Documents filtered by user via batch join
+    doc_q = db.query(Document)
+    if not is_admin:
+        doc_q = doc_q.join(Batch, Document.batch_id == Batch.id).filter(Batch.user_id == current_user.id)
+    total_documents = doc_q.count()
+
+    # Success rate
+    successful_batches = base_batch_query().filter(Batch.status == 'completed').count()
     success_rate = (successful_batches / total_batches * 100) if total_batches > 0 else 0
-    
+
     # Average processing time for completed batches
-    completed_batches = db.query(Batch).filter(
+    completed_batches = base_batch_query().filter(
         Batch.status == 'completed',
         Batch.completed_at.isnot(None)
     ).all()
-    
+
     avg_time = 0
     if completed_batches:
         total_time = sum(
-            (b.completed_at - b.created_at).total_seconds() 
+            (b.completed_at - b.created_at).total_seconds()
             for b in completed_batches
         )
         avg_time = total_time / len(completed_batches)
-    
-    # Documents by type - FIXED: Use Batch.id instead of Batch.batch_id
-    doc_types = db.query(
-        Batch.document_type, 
-        func.count(Batch.id)  # Changed from Batch.batch_id to Batch.id
+
+    # Documents by type
+    doc_types = base_batch_query().with_entities(
+        Batch.document_type,
+        func.count(Batch.id)
     ).group_by(Batch.document_type).all()
-    
+
     documents_by_type = {doc_type: count for doc_type, count in doc_types}
-    
-    # Recent activity (last 10 batches) - FIXED: Use batch.id instead of batch.batch_id
-    recent_batches = db.query(Batch).order_by(desc(Batch.created_at)).limit(10).all()
+
+    # Recent activity (last 10 batches)
+    recent_batches = base_batch_query().order_by(desc(Batch.created_at)).limit(10).all()
     recent_activity = []
-    
+
     for batch in recent_batches:
         recent_activity.append({
-            "batch_id": batch.id,  # Changed from batch.batch_id to batch.id
+            "batch_id": batch.id,
             "document_type": batch.document_type,
             "status": batch.status,
             "created_at": batch.created_at.isoformat() if batch.created_at else None,
             "documents": batch.total_documents
         })
-    
+
     # Processing trend (last 7 days)
     last_7_days = []
     for i in range(6, -1, -1):
         date = datetime.now() - timedelta(days=i)
         next_date = date + timedelta(days=1)
-        
-        day_batches = db.query(Batch).filter(
+
+        day_batches = base_batch_query().filter(
             and_(
                 Batch.created_at >= date,
                 Batch.created_at < next_date
             )
         ).all()
-        
+
         success_count = sum(1 for b in day_batches if b.status == 'completed')
         day_avg_time = 0
         if day_batches:
@@ -107,14 +122,14 @@ async def get_dashboard_stats(db: Session = Depends(get_db)):
                     (b.completed_at - b.created_at).total_seconds()
                     for b in completed
                 ) / len(completed)
-        
+
         last_7_days.append({
             "date": date.strftime("%Y-%m-%d"),
             "count": len(day_batches),
             "success_count": success_count,
             "avg_time": round(day_avg_time, 1)
         })
-    
+
     return DashboardStats(
         total_batches=total_batches,
         total_documents=total_documents,

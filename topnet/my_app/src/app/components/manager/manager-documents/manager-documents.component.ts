@@ -1,7 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { HttpClient, HttpClientModule } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
+import { environment } from '../../../environments/environment';
 
 interface Document {
   id: number;
@@ -22,7 +23,7 @@ interface Subordinate {
 @Component({
   selector: 'app-manager-documents',
   standalone: true,
-  imports: [CommonModule, FormsModule, HttpClientModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './manager-documents.component.html',
   styleUrls: ['./manager-documents.component.css']
 })
@@ -34,6 +35,10 @@ export class ManagerDocumentsComponent implements OnInit {
   limit = 20;
   page = 1;
   totalPages = 1;
+  loadingDocuments = true;
+  loadingSubordinates = true;
+  errorDocuments: string | null = null;
+  errorSubordinates: string | null = null;
 
   filters = {
     userId: null as number | null,
@@ -46,25 +51,44 @@ export class ManagerDocumentsComponent implements OnInit {
   selectedDoc: Document | null = null;
   extractedFields: any[] = [];
 
-  private apiUrl = 'http://localhost:8000/api/manager';
+  private apiUrl = `${environment.apiUrl}/api/manager`;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private cdr: ChangeDetectorRef) {}
 
   ngOnInit() {
+    console.log('🔵 ManagerDocumentsComponent initialized - API URL:', this.apiUrl);
     this.loadSubordinates();
     this.loadDocuments();
   }
 
   loadSubordinates() {
+    this.loadingSubordinates = true;
+    this.errorSubordinates = null;
+    this.cdr.detectChanges();
+    
+    console.log('📡 Loading subordinates from:', `${this.apiUrl}/subordinates`);
+    
     this.http.get<Subordinate[]>(`${this.apiUrl}/subordinates`).subscribe({
       next: (data) => {
+        console.log('✅ Subordinates loaded:', data);
         this.subordinates = data;
+        this.loadingSubordinates = false;
+        this.cdr.detectChanges();
       },
-      error: (err) => console.error('Error loading subordinates:', err)
+      error: (err) => {
+        console.error('❌ Error loading subordinates:', err);
+        this.errorSubordinates = err.error?.detail || err.message || 'Failed to load team members';
+        this.loadingSubordinates = false;
+        this.cdr.detectChanges();
+      }
     });
   }
 
   loadDocuments() {
+    this.loadingDocuments = true;
+    this.errorDocuments = null;
+    this.cdr.detectChanges();
+    
     let url = `${this.apiUrl}/documents?skip=${this.skip}&limit=${this.limit}`;
     
     if (this.filters.userId) url += `&user_id=${this.filters.userId}`;
@@ -77,14 +101,24 @@ export class ManagerDocumentsComponent implements OnInit {
       if (this.filters.dateTo) url += `&date_to=${this.filters.dateTo}`;
     }
 
+    console.log('📡 Loading documents from:', url);
+    
     this.http.get<any>(url).subscribe({
       next: (response) => {
+        console.log('✅ Documents loaded:', response);
         this.documents = response.documents;
         this.totalCount = response.total || 0;
         this.totalPages = Math.ceil(this.totalCount / this.limit);
         this.page = Math.floor(this.skip / this.limit) + 1;
+        this.loadingDocuments = false;
+        this.cdr.detectChanges();
       },
-      error: (err) => console.error('Error loading documents:', err)
+      error: (err) => {
+        console.error('❌ Error loading documents:', err);
+        this.errorDocuments = err.error?.detail || err.message || 'Failed to load documents';
+        this.loadingDocuments = false;
+        this.cdr.detectChanges();
+      }
     });
   }
 
@@ -138,7 +172,19 @@ export class ManagerDocumentsComponent implements OnInit {
   }
 
   downloadDocument(doc: Document) {
-    window.open(`${this.apiUrl}/documents/${doc.id}/download`, '_blank');
+    this.http.get(`${this.apiUrl}/documents/${doc.id}/download`, { responseType: 'blob' }).subscribe({
+      next: (blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = doc.filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      },
+      error: (err) => console.error('Download failed:', err)
+    });
   }
 
   closeModal() {
@@ -153,6 +199,11 @@ export class ManagerDocumentsComponent implements OnInit {
   }
 
   formatDate(dateString: string): string {
-    return new Date(dateString).toLocaleString();
+    if (!dateString) return 'N/A';
+    try {
+      return new Date(dateString).toLocaleString();
+    } catch {
+      return 'N/A';
+    }
   }
 }
