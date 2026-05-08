@@ -21,8 +21,6 @@ export class HomeComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    console.log('🔵 HOME COMPONENT LOADED');
-    // Get current user info
     this.authService.currentUser$.subscribe(user => {
       if (user) {
         this.userFullName = user.full_name || user.username;
@@ -30,6 +28,10 @@ export class HomeComponent implements OnInit {
         this.cdr.detectChanges();
       }
     });
+  }
+
+  hasPermission(name: string): boolean {
+    return this.authService.hasPermission(name);
   }
 
   navigateTo(docType: string) {

@@ -13,6 +13,7 @@ export interface User {
   manager_id: number | null;
   is_active: boolean;
   created_at?: string;
+  permissions: string[];  // e.g. ['idcard', 'invoice']
 }
 
 export interface LoginResponse {
@@ -182,6 +183,16 @@ export class AuthService {
    */
   isManager(): boolean {
     return this.hasRole('manager');
+  }
+
+  /**
+   * Check if user has a specific extraction permission by name
+   * e.g. 'idcard', 'invoice', 'passport', 'contract'
+   */
+  hasPermission(name: string): boolean {
+    const user = this.currentUserSubject.value;
+    if (!user) return false;
+    return user.permissions?.includes(name) ?? false;
   }
 
   /**

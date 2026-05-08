@@ -4,35 +4,31 @@
 </div>
 
 <div class="cards-grid">
-  <!-- ID Card -->
-  <div class="document-card" (click)="navigateTo('id-card')">
+  <div class="document-card" *ngIf="hasPermission('idcard')" (click)="navigateTo('id-card')">
     <div class="card-icon">🆔</div>
     <h3>ID Card</h3>
     <p>Extract data from national ID cards (front &amp; back)</p>
     <span class="card-action">Select →</span>
   </div>
 
-  <!-- Bill / Invoice -->
-  <div class="document-card" (click)="navigateTo('invoice')">
+  <div class="document-card" *ngIf="hasPermission('invoice')" (click)="navigateTo('invoice')">
     <div class="card-icon">📄</div>
     <h3>Bill / Invoice</h3>
     <p>Extract details from invoices and bills</p>
     <span class="card-action">Select →</span>
   </div>
 
-  <!-- Passport -->
-  <div class="document-card" (click)="navigateTo('passport')">
+  <div class="document-card" *ngIf="hasPermission('passport')" (click)="navigateTo('passport')">
     <div class="card-icon">🛂</div>
     <h3>Passport</h3>
     <p>Extract data from passport documents</p>
     <span class="card-action">Select →</span>
   </div>
 
-  <!-- Contract -->
-  <div class="document-card" (click)="navigateTo('contract')">
+  <div class="document-card" *ngIf="hasPermission('contract')" (click)="navigateTo('contract')">
     <div class="card-icon">📝</div>
     <h3>Contract</h3>
     <p>Extract key information from contracts</p>
     <span class="card-action">Select →</span>
   </div>
-</div>  
+</div>

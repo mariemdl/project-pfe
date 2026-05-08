@@ -261,6 +261,15 @@ async def get_current_user_info(
         models.UserActivityLog.user_id == current_user.id
     ).order_by(models.UserActivityLog.created_at.desc()).limit(5).all()
     
+    # Get user's permission names
+    user_perms = (
+        db.query(models.Permission)
+        .join(models.UserPermission, models.UserPermission.permission_id == models.Permission.id)
+        .filter(models.UserPermission.user_id == current_user.id)
+        .all()
+    )
+    permission_names = [p.name for p in user_perms]
+
     return {
         "id": current_user.id,
         "username": current_user.username,
@@ -271,6 +280,7 @@ async def get_current_user_info(
         "is_active": current_user.is_active,
         "created_at": current_user.created_at,
         "subordinate_count": subordinate_count,
+        "permissions": permission_names,
         "recent_activity": [
             {
                 "action": a.action,
